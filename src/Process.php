@@ -6,6 +6,9 @@
 
 namespace Parallel;
 
+use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\EventDispatcher\GenericEvent;
+
 class Process {
   /**
    * Process id.
@@ -25,6 +28,11 @@ class Process {
    * @var boolean
    */
   protected $isChild = FALSE;
+  
+  /**
+   * @var \Symfony\Component\EventDispatcher\EventDispatcher;
+   */
+  protected $signalDispatcher;
   
   // TODO This is silly.
   static protected $getters = [
@@ -79,6 +87,8 @@ class Process {
    * @param array $argv
    */
   public function __construct() {
+    $this->signalDispatcher = new EventDispatcher();
+    
     $this->setupSignalHandler();
     $this->updateProcessIds();
   }
@@ -142,6 +152,14 @@ class Process {
     return Main::EXIT_SUCCESS;
   }
   
+  public function addSignalHandler($handler) {
+    $this->signalDispatcher->addListener("parallel.process.signal", $handler);
+  }
+  
+  public function removeSignalHandler($handler) {
+    $this->signalDispatcher->removeListener("parallel.process.signal", $handler);
+  }
+  
   protected function updateProcessIds() {
     $this->pid = \posix_getpid();
     $this->ppid = \posix_getppid();
@@ -170,11 +188,14 @@ class Process {
     }
   }
   
-  protected function signalHandler(int $signo, $siginfo) : void {
+  // Has to be public? What a drag.
+  public function signalHandler(int $signo, $siginfo) : void {
     if (DEBUG && is_array($siginfo)) {
       print "Siginfo: \n";
       var_dump($siginfo);
     }
+    
+    $this->signalDispatcher->dispatch(new GenericEvent($signo, [$siginfo]), "parallel.process.signal");
     
     if (in_array($signo, static::$termination_signals)) {
       // Termination requested.

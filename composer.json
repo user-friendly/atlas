@@ -10,7 +10,8 @@
     ],
     "minimum-stability": "dev",
     "require": {
-        "php": "^7.3"
+        "php": "^7.3",
+        "symfony/event-dispatcher": "^5.2"
     },
     "autoload": {
         "psr-4": {"Parallel\\": "src/"}
