@@ -11,86 +11,33 @@ class Main {
   const EXIT_FAILURE = 1;
   
   /**
-   * Process id.
-   * 
-   * @var int
+   * @var \Parallel\Process
    */
-  protected $pid;
+  protected $mainProcess;
   
   /**
-   * Parent process id.
+   * An array of sub processes.
    * 
-   * @var int
-   */
-  protected $ppid;
-  
-  /**
-   * Main class ctor.
+   * @see \Parallel\Process
    * 
-   * @param int $argc
-   * @param array $argv
+   * @var array
    */
-  public function __construct(int $argc = 0, array $argv = []) {
-    $this->updateProcessIds();
-  }
+  protected $subProcess = [];
   
-  public function execute() : int {
+  public function run() : int {
+    if (DEBUG) {
+      print "Main::run() entered.\n";
+    }
+    $this->mainProcess = new Process();
     
-    $cpid = \pcntl_fork();
-    if ($cpid == -1) {
-      return $this::EXIT_FAILURE;
-    }
-    else if ($cpid) {
-      print "Child process created: $cpid\nExiting...\n";
-      sleep(60);
-    }
-    else {
-      // Child process setup.
-      $this->updateProcessIds();
-      sleep(60);
-      echo "Process {$this->pid}(parent {$this->ppid}) is done sleeping. Exiting...\n";
-    }
-    return $this::EXIT_SUCCESS;
-  }
-  
-  protected function updateProcessIds() {
-    $this->pid = \posix_getpid();
-    $this->ppid = \posix_getppid();
+    $this->subProcess[] = $this->mainProcess->fork();
+    
+    $this->mainProcess->execute(1);
     
     if (DEBUG) {
-      print "Process id {$this->pid}, parent process id {$this->ppid}.\n";
+      print "Main::run() done.\n";
     }
-  }
-  
-  protected function setupSignalHandler()
-  {
-      pcntl_signal(SIGTERM, [$this, 'signalHandler']);
-      pcntl_signal(SIGHUP, [$this, 'signalHandler']);
-  }
-  
-  protected function signalHandler(int $signo, $siginfo) {
-    if (DEBUG && is_array($siginfo)) {
-      var_dump($siginfo);
-    }
-    switch ($signo) {
-      case SIGTERM:
-        // Termination requested.
-        // Try to gracefully shutdown the deamon and its children.
-        if (DEBUG) {
-          print "Signal received: SIGTERM\n";
-          print "Shutdown initiated...\n";
-          
-          // TODO Wait on child processes to terminate, but not forever.
-          //      Send signals?
-          
-          exit($this::EXIT_SUCCESS);
-        }
-        
-        break;
-      default:
-        // Unknown signal received.
-        break;
-    }
+    return self::EXIT_SUCCESS;
   }
 }
 

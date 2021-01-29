@@ -7,7 +7,7 @@ require __DIR__ . '/vendor/autoload.php';
 
 $main = new \Parallel\Main();
 
-$exit_value = $main->execute();
+$exit_value = $main->run();
 if ($exit_value == 0) {
     return;
 }
