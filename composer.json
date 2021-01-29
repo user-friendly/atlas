@@ -1,0 +1,15 @@
+{
+    "name": "user-friendly/php-parallel",
+    "description": "Experimentation with PHP parallel processing.",
+    "type": "project",
+    "authors": [
+        {
+            "name": "Plamen Ivanov",
+            "email": "pivanov@foobar.ninja"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "php": "^7.3"
+    }
+}
