@@ -26,6 +26,25 @@ class Process {
    */
   protected $isChild = FALSE;
   
+  // TODO This is silly.
+  static protected $getters = [
+    'pid', 'ppid', 'isChild',
+  ];
+  
+  public function __get($name) {
+    if (in_array($name, static::$getters)) {
+      return $this->$name;
+    }
+    return NULL;
+  }
+  
+  public function __isset($name) {
+    if (in_array($name, static::$getters)) {
+      return isset($this->$name);
+    }
+    return NULL;
+  }
+  
   /**
    * Termination signals.
    *
@@ -64,6 +83,14 @@ class Process {
     $this->updateProcessIds();
   }
   
+  /**
+   * Create a new child process.
+   * 
+   * @see \pcntl_fork()
+   * @throws \RuntimeException
+   * @return int
+   *   Either 0 for the child process or the child's pid for the parent process.
+   */
   public function fork() : int {
     $child_pid = \pcntl_fork();
     if ($child_pid == -1) {
@@ -85,6 +112,22 @@ class Process {
       $this->isChild = TRUE;
     }
     return $child_pid;
+  }
+  
+  // TODO Misleading name.
+  /**
+   * Safe fork.
+   * 
+   * @throws \RuntimeException
+   * @return int|NULL
+   *    Eqivalent to ::fork(), except NULL is returned in case this is a child
+   *    process.
+   */
+  public function forkSafe() {
+    if ($this->isChild) {
+      return NULL;
+    }
+    return $this->fork();
   }
   
   public function execute($sleep = 60) : int {

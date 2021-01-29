@@ -18,6 +18,8 @@ class Main {
   /**
    * An array of sub processes.
    * 
+   * Must remain empty for child processes.
+   * 
    * @see \Parallel\Process
    * 
    * @var array
