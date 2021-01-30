@@ -190,10 +190,10 @@ class Process {
   
   // Has to be public? What a drag.
   public function signalHandler(int $signo, $siginfo) : void {
-    if (DEBUG && is_array($siginfo)) {
-      print "Siginfo: \n";
-      var_dump($siginfo);
-    }
+//     if (DEBUG && is_array($siginfo)) {
+//       print "Siginfo: \n";
+//       var_dump($siginfo);
+//     }
     
     $this->signalDispatcher->dispatch(new GenericEvent($signo, [$siginfo]), "parallel.process.signal");
     
