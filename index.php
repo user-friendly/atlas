@@ -103,12 +103,13 @@ if (!$process->isChild) {
   $clients = [];
   
   while (TRUE) {
-    if ($new_client_sock = \stream_socket_accept($server_sock, 60)) {
+    if ($new_client_sock = \stream_socket_accept($server_sock, -1)) {
       $stat_total_all_time++;
       println("Server: client connected to server! (stat: $stat_total_all_time)");
       
       // Don't block.
       \stream_set_blocking($new_client_sock, FALSE);
+      \stream_set_timeout($new_client_sock, 60);
       
       $clients[] = $new_client_sock;
     }
@@ -131,8 +132,12 @@ if (!$process->isChild) {
       }
     }
     if ($filter_socks) {
+      $old_count = count($clients);
       $clients = array_filter($clients);
+      $new_count = count($clients);
+      println("Server: clients cleaned up " . ($old_count - $new_count));
     }
+    
     $process->yield();
   }
   $shutdown();
@@ -140,13 +145,15 @@ if (!$process->isChild) {
 } // End server handler.
 
 else {
-  \sleep(\mt_rand(1, 2));
+  // \sleep(\mt_rand(1, 2));
   
   $local_socket = FALSE;
   for ($rt = 0; $rt < 3; $rt++) {
     $errno = 0;
     $errstr = 'NULL';
-    $local_socket = @\stream_socket_client($sock_url, $errno, $errstr, 60);
+    $local_socket = @\stream_socket_client($sock_url, $errno, $errstr, 60,
+        STREAM_CLIENT_CONNECT | STREAM_CLIENT_ASYNC_CONNECT
+      );
     if (!$local_socket) {
       log_error("Client: failed to connect to $sock_url, error: $errstr ($errno).");
       println("Client: retry connection ($rt)...");
@@ -158,17 +165,22 @@ else {
     exit(1);
   }
   
-  \stream_set_blocking($local_socket, TRUE);
+  // \stream_set_blocking($local_socket, TRUE);
+  \stream_set_timeout($local_socket, 60);
   
 //   // Tease out the server for some time.
 //   println("Client connected. Sleep some.");
 //   \sleep(1);
   
   // Assume all is written out.
-  println("Client: send message.");
-  $bytes = \fwrite($local_socket, "Hello from the client ({$process->pid}), via a Unix socket!!!");
-  println("Client: wrote $bytes to socket.");
-  \fflush($local_socket);
+  $bytes = \fwrite($local_socket, "\n\nHello from the client ({$process->pid}), via a Unix socket!!!\n");
+  for ($i = 0; $i < 3; $i++) {
+    $bytes += \fwrite($local_socket, "\t({$process->pid}) Date is: " . \date(DATE_ATOM) . "\n");
+    println("Client: send message of $bytes byte(s).");
+    \fflush($local_socket);
+    $bytes = 0;
+    $process->sleep(1);
+  }
   
   if (!\fclose($local_socket)) {
     log_error("Client: failed to close remote socket $sock_url");
