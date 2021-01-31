@@ -53,6 +53,19 @@ class Main {
   public function clientTest() : int {
     $this->println_debug("Main: start client test.");
     
+//     do {
+      for ($i = 0; $i < 8; $i++) {
+        $this->mainProcess->fork();
+        // $this->mainProcess->forkSafe();
+      }
+      
+//       if ($this->mainProcess->isChild) {
+//         break;
+//       }
+//       \sleep(2);
+//     }
+//     while (true);
+    
     $server = new Client($this);
     
     $ret = $server->run();

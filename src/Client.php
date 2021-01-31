@@ -27,7 +27,7 @@ class Client {
   protected $writeLength = 1024;
   
   // Max connect retries.
-  protected $retries = 3;
+  protected $retries = 8;
   
   protected $stat_total_bytes_sent = 0;
   
@@ -60,19 +60,17 @@ class Client {
     $this->main->println_debug("Client: connect to {$this->socket_url}");
     
     $this->socket = FALSE;
-    for ($rt = 0; $rt < $this->retries; $rt++) {
+    for ($retries = 0; $retries < $this->retries; $retries++) {
       $errno = 0;
       $errstr = 'NULL';
-      $this->socket = @\stream_socket_client($this->socket_url, $errno, $errstr, 60,
-        // NOTE I don't know why, but without the persistent flag, there are
-        //      there is one additional "empty" connection that's registered by
-        //      the server/daemon.
-        STREAM_CLIENT_CONNECT | STREAM_CLIENT_PERSISTENT
-        );
-      if (!$this->socket) {
+      $this->socket = @\stream_socket_client($this->socket_url, $errno, $errstr, 60, STREAM_CLIENT_CONNECT);
+      if ($this->socket) {
+        break;
+      }
+      else {
         $this->main->log_error("Client: failed to connect to $this->socket_url, error: $errstr ($errno).");
-        $this->main->println_debug("Client: retry connection ($rt)...");
-        $this->main->getProcess()->sleep(0.050);
+        $this->main->println_debug("Client: retry connection ($retries)...");
+        $this->main->getProcess()->sleep(\mt_rand(50, 500) / 1000);
       }
     }
     if (!$this->socket) {
@@ -82,6 +80,8 @@ class Client {
     // For the time being.
     \stream_set_blocking($this->socket, TRUE);
     \stream_set_timeout($this->socket, $this->socket_timeout);
+    
+    $this->main->println_debug("Client: connected after {$retries} retries.");
     
 //     if (0 != \stream_set_write_buffer($this->socket, 0)) {
 //       $this->main->log_error("Client: failed to set write buffer to 0.");

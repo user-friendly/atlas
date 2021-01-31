@@ -180,7 +180,14 @@ class Server {
     $errstr = 'NULL';
     $this->socket = \stream_socket_server($this->sock_url, $errno, $errstr,
       STREAM_SERVER_BIND | STREAM_SERVER_LISTEN
-      );
+    );
+    
+    $this->main->stream_info($this->socket);
+    
+//     if (!\stream_context_set_option($this->socket, 'unix', 'backlog', 256)) {
+//       \fclose($this->socket);
+//       throw new \RuntimeException("Failed to create $this->sock_path, error: $errstr ($errno).");
+//     }
     
     if (!$this->socket ) {
       throw new \RuntimeException("Failed to create $this->sock_path, error: $errstr ($errno).");
