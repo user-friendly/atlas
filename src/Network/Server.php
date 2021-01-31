@@ -4,7 +4,7 @@
  * Server class file.
  */
 
-namespace Parallel;
+namespace Parallel\Network;
 
 class Server {
   const MARK_HELLO = 0x0002;
@@ -35,7 +35,7 @@ class Server {
   // Not really used (not displayed, but populated?).
   protected $stat_total_bytes_sent = 0;
   
-  public function __construct(Main $main) {
+  public function __construct(\Parallel\Main $main) {
     $this->main = $main;
     
     // The socket path should always be absolute.
@@ -66,14 +66,13 @@ class Server {
     
     $this->shutdown();
     
-    return Main::EXIT_SUCCESS;
+    return \Parallel\Main::EXIT_SUCCESS;
   }
   
   protected function accept() : void {
     if ($new_client = @\stream_socket_accept($this->socket, 0)) {
       $this->stat_total_all_time++;
       $this->main->println_debug("Server: client connected to server! (stat: {$this->stat_total_all_time})");
-      
       
       // FIXME The handshake needs to be moved out of here and should not block.
       // Temporary set blocking mode, till the handshake is complete.

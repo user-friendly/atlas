@@ -40,7 +40,7 @@ class Main {
     
     $this->println_debug("Main: start server.");
     
-    $server = new Server($this);
+    $server = new Network\Server($this);
     
     $ret = $server->run();
 
@@ -66,7 +66,7 @@ class Main {
 //     }
 //     while (true);
     
-    $server = new Client($this);
+    $server = new Network\Client($this);
     
     $ret = $server->run();
     
