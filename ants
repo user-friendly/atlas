@@ -1,0 +1,8 @@
+#!/usr/bin/env php
+<?php
+
+define('DEBUG', TRUE);
+
+require __DIR__ . '/vendor/autoload.php';
+
+return (new \Ants\Main())->run();

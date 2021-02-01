@@ -4,7 +4,7 @@
  * Program entry point.
  */
 
-namespace Parallel;
+namespace Ants;
 
 // A bit of nasty code, since we don't have preprocessing.
 if (!defined("DEBUG")) {
@@ -19,7 +19,7 @@ class Main {
   const EXIT_FAILURE = 1;
   
   /**
-   * @var \Parallel\Process
+   * @var \Ants\Process
    */
   protected $mainProcess;
   
@@ -28,7 +28,7 @@ class Main {
    * 
    * Must remain empty for child processes.
    * 
-   * @see \Parallel\Process
+   * @see \Ants\Process
    * 
    * @var array
    */
@@ -84,7 +84,7 @@ class Main {
   public function run() : int {
     global $argv, $argc;
     
-    if ($argc > 1 && isset($argv[1]) && $argv[1] == 'test') {
+    if ($argc > 1 && isset($argv[1]) && $argv[1] == 'swarm-test') {
       return $this->clientTest();
     }
     

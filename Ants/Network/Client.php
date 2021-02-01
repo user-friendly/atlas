@@ -4,13 +4,13 @@
  * Client class file.
  */
 
-namespace Parallel\Network;
+namespace Ants\Network;
 
-use Parallel\PDO\Dummy;
+use Ants\PDO\Dummy;
 
 class Client {
   /**
-   * @var \Parallel\Main;
+   * @var \Ants\Main;
    */
   protected $main;
   
@@ -31,7 +31,7 @@ class Client {
   
   protected $stat_total_bytes_sent = 0;
   
-  public function __construct(\Parallel\Main $main) {
+  public function __construct(\Ants\Main $main) {
     $this->main = $main;
     
     // The socket path should always be absolute.
@@ -53,7 +53,7 @@ class Client {
     // At this point, this object is not longer an invariant.
     $this->shutdown();
     
-    return \Parallel\Main::EXIT_SUCCESS;
+    return \Ants\Main::EXIT_SUCCESS;
   }
   
   protected function connect() : void {

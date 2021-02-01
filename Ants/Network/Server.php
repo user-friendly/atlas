@@ -4,14 +4,14 @@
  * Server class file.
  */
 
-namespace Parallel\Network;
+namespace Ants\Network;
 
 class Server {
   const MARK_HELLO = 0x0002;
   const MARK_BYE   = 0x0004;
   
   /**
-   * @var \Parallel\Main;
+   * @var \Ants\Main;
    */
   protected $main;
   
@@ -35,7 +35,7 @@ class Server {
   // Not really used (not displayed, but populated?).
   protected $stat_total_bytes_sent = 0;
   
-  public function __construct(\Parallel\Main $main) {
+  public function __construct(\Ants\Main $main) {
     $this->main = $main;
     
     // The socket path should always be absolute.
@@ -66,7 +66,7 @@ class Server {
     
     $this->shutdown();
     
-    return \Parallel\Main::EXIT_SUCCESS;
+    return \Ants\Main::EXIT_SUCCESS;
   }
   
   protected function accept() : void {

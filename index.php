@@ -8,7 +8,6 @@ if (!$fp) {
   throw new \RuntimeException("Faild to open test binary file.");
 }
 
-
 $data = NULL;
 
 // $data = chr(0x1);

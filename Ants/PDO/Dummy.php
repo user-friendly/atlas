@@ -4,7 +4,7 @@
  * Dummy PDO class file.
  */
 
-namespace Parallel\PDO;
+namespace Ants\PDO;
 
 /**
  * Used demonstration purposes.

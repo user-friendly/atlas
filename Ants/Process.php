@@ -4,7 +4,7 @@
  * Process class file.
  */
 
-namespace Parallel;
+namespace Ants;
 
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\GenericEvent;
