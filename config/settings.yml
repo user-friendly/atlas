@@ -1,0 +1,7 @@
+#
+# Main configuration file.
+#
+
+daemon:
+    server:
+        socket: 'unix://{getcwd()}/'

@@ -6,6 +6,14 @@
 
 namespace Parallel;
 
+// A bit of nasty code, since we don't have preprocessing.
+if (!defined("DEBUG")) {
+  define("DEBUG", FALSE);
+}
+
+use Monolog\Logger;
+use Monolog\Handler\StreamHandler;
+
 class Main {
   const EXIT_SUCCESS = 0;
   const EXIT_FAILURE = 1;
@@ -25,9 +33,51 @@ class Main {
    * @var array
    */
   protected $subProcess = [];
+
+  /**
+   * Local logger.
+   * 
+   * @var \Monolog\Logger
+   */
+  protected $logger;
+  
+  /**
+   * @var \Monolog\Logger[]
+   */
+  protected $loggers = [];
+  
+  /**
+   * @var \Monolog\Handler\HandlerInterface[]
+   */
+  protected $loggersHandlersDefault;
   
   public function __construct() {
     $this->mainProcess = new Process();
+    
+    // Get log level from configurations (include cmd line args) and override
+    // this value.
+    $log_level = DEBUG ? Logger::DEBUG : Logger::WARNING;
+    $log_file = DEBUG ? STDOUT : STDERR;
+    
+    $this->loggersHandlersDefault = [
+      // Doesn't seem like a good idea to split them like this.
+      // new StreamHandler(STDERR, Logger::WARNING, FALSE),
+      // In prod, only warnings and above should be logged. On dev all can go
+      // through STDERR.
+      new StreamHandler($log_file, $log_level),
+    ];
+    
+    $this->logger = $this->createLogger("Main");
+    
+    // FIXME Remove test.
+    include __DIR__ . "../../tests/LoggerTest.php";
+  }
+  
+  // TODO Move to logger factory.
+  public function createLogger(string $name) : Logger {
+    $new_logger = new Logger($name, $this->loggersHandlersDefault);
+    $this->loggers[] = $new_logger;
+    return $new_logger;
   }
   
   // Starts the daemon.
