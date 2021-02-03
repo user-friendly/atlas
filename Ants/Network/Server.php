@@ -6,6 +6,7 @@
 
 namespace Ants\Network;
 
+use Ants\Main;
 use Ants\Logger\LoggerTrait;
 
 class Server {
@@ -39,7 +40,7 @@ class Server {
   // Not really used (not displayed, but populated?).
   protected $stat_total_bytes_sent = 0;
   
-  public function __construct(\Ants\Main $main) {
+  public function __construct(Main $main) {
     $this->logger = static::getLogger();
     $this->main = $main;
     
@@ -71,7 +72,7 @@ class Server {
     
     $this->shutdown();
     
-    return \Ants\Main::EXIT_SUCCESS;
+    return Main::EXIT_SUCCESS;
   }
   
   protected function accept() : void {

@@ -66,7 +66,7 @@ class Main {
   // Performs a client test.
   // TODO Of course it needs to be moved to a unit test.
   public function clientTest(int $swarm_count = NULL) : int {
-    $swarm_count = $swarm_count ?? 2;
+    $swarm_count = $swarm_count ?? 8;
     $this->logger->debug("start client test, swarm count: {$swarm_count}");
   
     for ($i = 0; $i < $swarm_count; $i++) {
