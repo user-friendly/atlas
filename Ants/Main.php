@@ -11,10 +11,12 @@ if (!defined("DEBUG")) {
   define("DEBUG", FALSE);
 }
 
-use Monolog\Logger;
-use Monolog\Handler\StreamHandler;
+use Ants\Logger\LoggerFactory;
+use Ants\Logger\LoggerTrait;
 
 class Main {
+  use LoggerTrait;
+  
   const EXIT_SUCCESS = 0;
   const EXIT_FAILURE = 1;
   
@@ -33,138 +35,96 @@ class Main {
    * @var array
    */
   protected $subProcess = [];
-
-  /**
-   * Local logger.
-   * 
-   * @var \Monolog\Logger
-   */
-  protected $logger;
-  
-  /**
-   * @var \Monolog\Logger[]
-   */
-  protected $loggers = [];
-  
-  /**
-   * @var \Monolog\Handler\HandlerInterface[]
-   */
-  protected $loggersHandlersDefault;
   
   public function __construct() {
+    LoggerFactory::init();
+    $this->logger = static::getLogger();
+    
     $this->mainProcess = new Process();
-    
-    // Get log level from configurations (include cmd line args) and override
-    // this value.
-    $log_level = DEBUG ? Logger::DEBUG : Logger::WARNING;
-    $log_file = DEBUG ? STDOUT : STDERR;
-    
-    $this->loggersHandlersDefault = [
-      // Doesn't seem like a good idea to split them like this.
-      // new StreamHandler(STDERR, Logger::WARNING, FALSE),
-      // In prod, only warnings and above should be logged. On dev all can go
-      // through STDERR.
-      new StreamHandler($log_file, $log_level),
-    ];
-    
-    $this->logger = $this->createLogger("Main");
-    
-    // FIXME Remove test.
-    include __DIR__ . "../../tests/LoggerTest.php";
-  }
-  
-  // TODO Move to logger factory.
-  public function createLogger(string $name) : Logger {
-    $new_logger = new Logger($name, $this->loggersHandlersDefault);
-    $this->loggers[] = $new_logger;
-    return $new_logger;
   }
   
   // Starts the daemon.
   public function run() : int {
     global $argv, $argc;
     
-    if ($argc > 1 && isset($argv[1]) && $argv[1] == 'swarm-test') {
-      return $this->clientTest();
+    if ($argc > 1 && $argv[1] == 'swarm-test') {
+      return $this->clientTest(
+        isset($argv[2]) && \is_numeric($argv[2]) ? (int) $argv[2] : NULL
+        );
     }
     
-    $this->println_debug("Main: start server.");
+    $this->logger->debug("start server.");
     
     $server = new Network\Server($this);
     
     $ret = $server->run();
 
-    $this->println_debug("Main: done with server.");
+    $this->logger->debug("done with server.");
     return $ret;
   }
   
   // Performs a client test.
   // TODO Of course it needs to be moved to a unit test.
-  public function clientTest() : int {
-    $this->println_debug("Main: start client test.");
+  public function clientTest(int $swarm_count = NULL) : int {
+    $swarm_count = $swarm_count ?? 2;
+    $this->logger->debug("start client test, swarm count: {$swarm_count}");
+  
+    for ($i = 0; $i < $swarm_count; $i++) {
+      // $this->mainProcess->fork();
+      $child_pid = $this->mainProcess->forkSafe();
+      if ($child_pid !== NULL) {
+        $this->subProcess["$child_pid"] = $child_pid;
+      }
+      else {
+        // This is the child. Break out of the loop.
+        break;
+      }
+    }
     
-//     do {
-      for ($i = 0; $i < 8; $i++) {
-        $this->mainProcess->fork();
-        // $this->mainProcess->forkSafe();
+    if ($this->mainProcess->isChild) {
+      try {
+        $ret = (new Network\Client($this))->run();
+      }
+      catch (\RuntimeException $e) {
+        $this->logger->error($e->getMessage());
+        exit(Main::EXIT_FAILURE);
+      }
+    }
+    else {
+      while (count($this->subProcess)) {
+        $status = NULL;
+        $pid = \pcntl_wait($status);
+        if ($pid > 0) {
+          if (isset($this->subProcess[$pid])) {
+            unset($this->subProcess[$pid]);
+            
+            // TODO Figure out why the above exit() with non-zero is not
+            //      captured by the following block.
+            if (\pcntl_wifexited($status)) {
+              $this->logger->debug("child process $pid is done, with status $status");
+            }
+            else {
+              $this->logger->error("child process $pid failed, with status $status");
+            }
+          }
+          else {
+            $this->logger->warning("A child process ($pid) ended, but was not accounted for to begin with.");
+          }
+        }
+        else {
+          //$this->mainProcess->yield();
+          $this->mainProcess->sleep(2);
+        }
       }
       
-//       if ($this->mainProcess->isChild) {
-//         break;
-//       }
-//       \sleep(2);
-//     }
-//     while (true);
+      $this->logger->debug("done with client test.");
+      return Main::EXIT_SUCCESS;;
+    }
     
-    $server = new Network\Client($this);
-    
-    $ret = $server->run();
-    
-    $this->println_debug("Main: done with client test.");
     return $ret;
   }
   
   public function getProcess() : Process {
     return $this->mainProcess;
-  }
-  
-  // Utility functions.
-  public function println($msg) {
-    print "({$this->mainProcess->pid}) $msg" . PHP_EOL;
-  }
-  
-  public function println_debug($msg) {
-    if (DEBUG) {
-      $this->println($msg);
-    }
-  }
-  
-  public function log_error($msg) {
-    fwrite(\STDERR, "({$this->mainProcess->pid}) $msg" . PHP_EOL);
-  }
-  
-  public function stream_info($stream) {
-    $this->println("Socket open: " . \stream_socket_get_name($stream, FALSE));
-    
-    if (\stream_supports_lock($stream)) {
-      $this->println("Socket supports locks.");
-    }
-    else {
-      $this->println("Socket does not support locks.");
-    }
-    
-    if (\stream_is_local($stream)) {
-      $this->println("Socket is local.");
-    }
-    else {
-      $this->println("Socket is not local.");
-    }
-    
-    if (\stream_isatty($stream)) {
-      $this->println("Socket is tty.");
-    }
-    else {
-      $this->println("Socket is not tty.");
-    }
   }
 }

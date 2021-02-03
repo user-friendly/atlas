@@ -6,10 +6,13 @@
 
 namespace Ants;
 
+use Ants\Logger\LoggerTrait;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\GenericEvent;
 
 class Process {
+  use LoggerTrait;
+  
   /**
    * Process id.
    *
@@ -77,6 +80,7 @@ class Process {
    * Poor man's yield.
    */
   static public function yield() {
+    // FIXME Magic number.
     static::sleep(0.025);
   }
   
@@ -87,6 +91,7 @@ class Process {
    * @param array $argv
    */
   public function __construct() {
+    $this->logger = static::getLogger();
     $this->signalDispatcher = new EventDispatcher();
     
     $this->setupSignalHandler();
@@ -111,9 +116,7 @@ class Process {
         );
     }
     else if ($child_pid) {
-      if (DEBUG) {
-        print "Child process created: $child_pid\n";
-      }
+      $this->logger->debug("Child process created: $child_pid");
     }
     else {
       // Child process setup.
@@ -145,9 +148,7 @@ class Process {
       static::yield();
     }
     
-    if (DEBUG) {
-      print "Process {$this->pid}(parent {$this->ppid}) is done.\n";
-    }
+    $this->logger->debug("Process {$this->pid}(parent {$this->ppid}) is done.");
     
     return Main::EXIT_SUCCESS;
   }
@@ -162,11 +163,8 @@ class Process {
   
   protected function updateProcessIds() {
     $this->pid = \posix_getpid();
-    $this->ppid = \posix_getppid();
-    
-    if (DEBUG) {
-      print "Update process ids to {$this->pid}({$this->ppid})\n";
-    }
+    $this->ppid = \posix_getppid();    
+    $this->logger->debug("Update process ids to {$this->pid}({$this->ppid})");
   }
   
   protected function setupSignalHandler()
@@ -190,36 +188,25 @@ class Process {
   
   // Has to be public? What a drag.
   public function signalHandler(int $signo, $siginfo) : void {
-//     if (DEBUG && is_array($siginfo)) {
-//       print "Siginfo: \n";
-//       var_dump($siginfo);
-//     }
-    
     $this->signalDispatcher->dispatch(new GenericEvent($signo, [$siginfo]), "parallel.process.signal");
     
     if (in_array($signo, static::$termination_signals)) {
+      $this->logger->warning("Forced shutdown of {$this->pid}({$this->ppid}).");
       // Termination requested.
-      // Try to gracefully shutdown the deamon and its children.
-      if (DEBUG) {
-        print "Forced shutdown of {$this->pid}({$this->ppid}).\n";
-        
-        // Do not wait on child processes. Notify them instead of the manager
-        // process termination.
-      }
+      // TODO Try to gracefully shutdown the deamon and its children.
+      // TODO Do not wait on child processes. Notify them instead of the manager
+      //      process termination.
+      //      Edit: signals seem to be passed to the child processes
       exit(Main::EXIT_SUCCESS);
     }
     
     // All other signals handled here.
     switch ($signo) {
       case SIGUSR1:
-        if (DEBUG) {
-          print "Received SIGUSR1.\n";
-        }
+        $this->logger->debug("Received SIGUSR1.");
         break;
       case SIGALRM:
-        if (DEBUG) {
-          print "Received SIGALARM.\n";
-        }
+        $this->logger->debug("Received SIGALARM.");
         break;
       default:
         // Unknown signal received.

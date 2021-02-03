@@ -6,9 +6,12 @@
 
 namespace Ants\Network;
 
+use Ants\Logger\LoggerTrait;
 use Ants\PDO\Dummy;
 
 class Client {
+  use LoggerTrait;
+  
   /**
    * @var \Ants\Main;
    */
@@ -32,6 +35,7 @@ class Client {
   protected $stat_total_bytes_sent = 0;
   
   public function __construct(\Ants\Main $main) {
+    $this->logger = static::getLogger();
     $this->main = $main;
     
     // The socket path should always be absolute.
@@ -57,7 +61,7 @@ class Client {
   }
   
   protected function connect() : void {
-    $this->main->println_debug("Client: connect to {$this->socket_url}");
+    $this->logger->debug("Client: connect to {$this->socket_url}");
     
     $this->socket = FALSE;
     for ($retries = 0; $retries < $this->retries; $retries++) {
@@ -68,8 +72,8 @@ class Client {
         break;
       }
       else {
-        $this->main->log_error("Client: failed to connect to $this->socket_url, error: $errstr ($errno).");
-        $this->main->println_debug("Client: retry connection ($retries)...");
+        $this->logger->error("Client: failed to connect to $this->socket_url, error: $errstr ($errno).");
+        $this->logger->debug("Client: retry connection ($retries)...");
         $this->main->getProcess()->sleep(\mt_rand(50, 500) / 1000);
       }
     }
@@ -81,18 +85,18 @@ class Client {
     \stream_set_blocking($this->socket, TRUE);
     \stream_set_timeout($this->socket, $this->socket_timeout);
     
-    $this->main->println_debug("Client: connected after {$retries} retries.");
+    $this->logger->debug("Client: connected after {$retries} retries.");
     
 //     if (0 != \stream_set_write_buffer($this->socket, 0)) {
-//       $this->main->log_error("Client: failed to set write buffer to 0.");
+//       $this->logger->error("Client: failed to set write buffer to 0.");
 //     }
   }
   
   protected function shutdown() {
     if (!\fclose($this->socket)) {
-      $this->main->log_error("Client: failed to close remote socket $this->socket_url");
+      $this->logger->error("Client: failed to close remote socket $this->socket_url");
     }
-    $this->main->println_debug("Client: shutdown. Total bytes sent: {$this->stat_total_bytes_sent}");
+    $this->logger->debug("Client: shutdown. Total bytes sent: {$this->stat_total_bytes_sent}");
   }
   
   protected function write($data) {
@@ -112,10 +116,10 @@ class Client {
   protected function sendTestPayload() : void {
     $this->writeHello();
     // If the server doesn't close the connection, we're good.
-    $this->main->println_debug("Client: handshake successful, wait for hello.");
+    $this->logger->debug("Client: handshake successful, wait for hello.");
     
     if ($recv_buff = $this->read()) {
-      $this->main->println_debug("Client: received from server: $recv_buff");
+      $this->logger->debug("Client: received from server: $recv_buff");
     }
     
     $this->write($this->getMessage_Hello());
@@ -125,7 +129,7 @@ class Client {
 //     $this->write("\n\n");
     
 //     for ($i = 0; $i < 3; $i++) {
-//       $this->main->println_debug("Client: send date message.");
+//       $this->logger->debug("Client: send date message.");
 //       $this->write($this->getMessage_Date());
 //       \fflush($this->socket);
 //       $this->main->getProcess()->sleep(1);

@@ -6,7 +6,11 @@
 
 namespace Ants\Network;
 
+use Ants\Logger\LoggerTrait;
+
 class Server {
+  use LoggerTrait;
+  
   const MARK_HELLO = 0x0002;
   const MARK_BYE   = 0x0004;
   
@@ -36,6 +40,7 @@ class Server {
   protected $stat_total_bytes_sent = 0;
   
   public function __construct(\Ants\Main $main) {
+    $this->logger = static::getLogger();
     $this->main = $main;
     
     // The socket path should always be absolute.
@@ -72,7 +77,7 @@ class Server {
   protected function accept() : void {
     if ($new_client = @\stream_socket_accept($this->socket, 0)) {
       $this->stat_total_all_time++;
-      $this->main->println_debug("Server: client connected to server! (stat: {$this->stat_total_all_time})");
+      $this->logger->debug("client connected to server! (stat: {$this->stat_total_all_time})");
       
       // FIXME The handshake needs to be moved out of here and should not block.
       // Temporary set blocking mode, till the handshake is complete.
@@ -83,7 +88,7 @@ class Server {
         \stream_set_blocking($new_client, FALSE);
         \stream_set_timeout($new_client, $this->client_socket_timeout);
 
-        $this->main->println_debug("Server: handshake successful, say hello");
+        $this->logger->debug("handshake successful, say hello");
         // Send out a "nice to meet you".
         $this->writeBuffer($new_client, "Hello from the daemon ({$this->main->getProcess()->pid})!");
         
@@ -94,7 +99,7 @@ class Server {
       }
     }
 //     else if (DEBUG) {
-//       $this->main->println_debug("Server: failed to accept new client.");
+//       $this->logger->debug("failed to accept new client.");
 //     }
   }
   
@@ -107,11 +112,11 @@ class Server {
       }
       else {
         $hex_header = \dechex($mark);
-        $this->main->log_error("Server: invalid HELLO mark (0x{$hex_header}), disconnecting client.");
+        $this->logger->error("invalid HELLO mark (0x{$hex_header}), disconnecting client.");
       }
     }
     else {
-      $this->main->log_error("Server: failed to read HELLO mark, disconnecting client.");
+      $this->logger->error("failed to read HELLO mark, disconnecting client.");
     }
     return FALSE;
   }
@@ -121,13 +126,13 @@ class Server {
   protected function read() : void {
     foreach ($this->client_sockets as &$client_sock) {
       if ($recv_buff = \fread($client_sock, 1024)) {
-        $this->main->println_debug("Server: from client: $recv_buff");
+        $this->logger->debug("from client: $recv_buff");
       }
       
       // TODO Move to a separate method?
       if (\feof($client_sock)) {
         
-        $this->main->println_debug("Server: closing client connection.");
+        $this->logger->debug("closing client connection.");
         
         \fflush($client_sock);
         \fclose($client_sock);
@@ -165,7 +170,7 @@ class Server {
     if (DEBUG) $new_count = count($this->client_sockets);
     $this->client_sockets_filter = FALSE;
     
-    $this->main->println_debug("Server: clients cleaned up " . ($old_count - $new_count));
+    $this->logger->debug("clients cleaned up " . ($old_count - $new_count));
     
   }
   
@@ -181,7 +186,9 @@ class Server {
       STREAM_SERVER_BIND | STREAM_SERVER_LISTEN
     );
     
-    $this->main->stream_info($this->socket);
+    if (DEBUG) {
+      Connection::debugStreamInfo($this->socket, $this->logger);
+    }
     
 //     if (!\stream_context_set_option($this->socket, 'unix', 'backlog', 256)) {
 //       \fclose($this->socket);
@@ -192,20 +199,20 @@ class Server {
       throw new \RuntimeException("Failed to create $this->sock_path, error: $errstr ($errno).");
     }
     else {
-      $this->main->println_debug("Bound to socket: $this->sock_url");
+      $this->logger->debug("Bound to socket: $this->sock_url");
     }
   }
   
   public function shutdown() : void {
     // TODO Do we need to do that for a Unix socket? It goes both ways...
     if (!\stream_socket_shutdown($this->socket, STREAM_SHUT_RD)) {
-      log_error("Server: failed to shutdown socket.");
+      log_error("failed to shutdown socket.");
     }
     
     if (!\fclose($this->socket)) {
-      log_error("Server: failed to close socket.");
+      log_error("failed to close socket.");
     }
     
-    $this->main->println_debug("Server: shutdown.");
+    $this->logger->debug("shutdown.");
   }
 }
