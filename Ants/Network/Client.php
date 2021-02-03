@@ -42,7 +42,7 @@ class Client {
     $this->socket_path = \getcwd() . '/php-daemon.sock';
     $this->socket_url = "unix://{$this->socket_path}";
     
-    // $this->sock_url = 'tcp://0.0.0.0:9999';
+    //$this->socket_url = 'tcp://0.0.0.0:9999';
     
     $this->main->getProcess()->addSignalHandler([$this, "shutdown"]);
   }
@@ -82,6 +82,7 @@ class Client {
     }
     
     $conn = new Connection($this->socket);
+    $conn->doReadTestAndDie();
     
     
     // For the time being.

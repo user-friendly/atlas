@@ -49,7 +49,7 @@ class Server {
     $this->sock_path = \getcwd() . '/php-daemon.sock';
     $this->sock_url = "unix://{$this->sock_path}";
     
-    // $this->sock_url = 'tcp://0.0.0.0:9999';
+    //$this->sock_url = 'tcp://0.0.0.0:9999';
     
     $this->main->getProcess()->addSignalHandler([$this, "shutdown"]);
   }
@@ -90,13 +90,11 @@ class Server {
         $payload[] = Dummy::generateDummyPayload_String();
       }
       
+      $conn = new Connection($new_client);
+      
       foreach ($payload as $binary) {
-        $this->logger->debug("Send first packet of 256 bytes");
-        // Length given, just in case magic quotes are still around.
-        $bytes = @\fwrite($new_client, $binary, \strlen($binary));
-        if ($bytes === FALSE) {
-          var_dump(error_get_last());
-        }
+        $this->logger->debug("Send packet of 256 bytes");
+        $conn->sendSome($binary);
         \sleep(5);
       }
       $this->logger->debug("Done with test");

@@ -26,11 +26,26 @@ class Connection {
   
   protected $timeout;
   
-  protected $readBuffer;
+  /**
+   * Stream native read buffer size.
+   * 
+   * @var int
+   */
+  protected $readBuffer = NULL;
   
-  protected $writeBuffer;
+  /**
+   * Stream native write buffer size.
+   * 
+   * @var int
+   */
+  protected $writeBuffer = NULL;
   
-  protected $​chunkSize;
+  /**
+   * Stream native chunk size size.
+   * 
+   * @var int
+   */
+  protected $​chunkSize = NULL;
   
   /**
    * Connection constructor. 
@@ -38,7 +53,7 @@ class Connection {
    * @param resource $stream
    *   A stream resource, ready for I/O.
    */
-  public function __construct($stream) {
+  public function __construct($stream, $blockMode = TRUE, $timeout = 60) {
     $this->logger = static::getLogger();
     
     if (!is_resource($stream)) {
@@ -46,35 +61,113 @@ class Connection {
     }
     $this->stream = $stream;
     
-//     $buff_size = \socket_get_option($this->stream, SOL_SOCKET, SO_RCVBUF);
-//     if ($buff_size !== FALSE) {
-//       $this->logger->debug("recv buffer size {$buff_size}");
-//     }
-//     else {
-//       $this->logger->error("failed to get recv buff size");
-//     }
-    $this->setBlockMode(TRUE);
-    $this->setTimeout(60);
-    $this->setReadBuffer(1024);
+    // Setup stream properties.
+    $this->setBlockMode($blockMode);
+    $this->setTimeout($timeout);
     
-    $this->logger->debug("First read of 512 bytes...");
+    // No idea what the following buffers will change, in terms of performance.
+    // Just let them be the default.
+    //$this->setReadBuffer($readBuffer);
+    // Doesn't seem to work (on my machine, PHP 7.3).
+    // $this->setWriteBuffer($writeBuffer);
+    // It seems chunk size sets the maximum packet size. If a packet larger than
+    // chunk is received, it will unblock a blocked \fread() and a chunk sized
+    // string will be returned.
+    //$this->setChunkSize($chunkSize);
+  }
+  
+  public function doReadTestAndDie() {
+    $this->logger->debug("Consume 512 bytes...");
     $msg  = \fread($this->stream, 512);
-    $bytes = \count($msg);
+    $bytes = \strlen($msg);
     $this->logger->debug("Read $bytes.");
     
     $this->logger->debug("First read of 512 bytes...");
     $msg  = \fread($this->stream, 512);
-    $bytes = \count($msg);
+    $bytes = \strlen($msg);
     $this->logger->debug("Read $bytes.");
     
     die();
   }
   
-  protected function fwrite($binary) {
-    // Length given, just in case magic quotes are still around.
-    $bytes = @\fwrite($this->stream, $binary, \strlen($binary));
-    // TODO Add bytes to stats, if DEBUG is on.
+  /**
+   * Read some binary data from stream.
+   * 
+   * Do not use this method to send data unless you know what you're doing.
+   * 
+   * @see \fread()
+   * @see Connection::fread()
+   * 
+   * @param int $size
+   * @throws \RuntimeException
+   * @return string
+   *   Returned binary data.
+   */
+  public function readSome(int $size = 1500) : string {
+    $binary = $this->fread($size);
+    if ($binary === FALSE) {
+      $error = \error_get_last();
+      \error_clear_last();
+      throw new \RuntimeException($error['message'] ? $error['message'] : 'Unknown stream read error.');
+    }
+    // if (DEBUG) save bytes to stats 
+    return $binary;
+  }
+  
+  /**
+   * Write some binary data to stream.
+   * 
+   * Do not use this method to send data unless you know what you're doing.
+   * 
+   * @see \fwrite()
+   * @see Connection::fwrite()
+   * 
+   * @param string|array $binary
+   *   Bytes to be written, as a string or as an array of bytes. 
+   * @throws \RuntimeException
+   *   In case there's a mismatch between bytes to be written and bytes written.
+   * @return int
+   *   Number of bytes written.
+   */
+  public function sendSome($binary) : int {
+    if (is_array($binary)) {
+      $binary = \implode($binary);
+    }
+    else if (!is_string($binary)) {
+      throw new \RuntimeException("Binary bust be a string or an array of characters");
+    }
+    $bytes = $this->fwrite($binary);
+    if (\strlen($binary) !== $bytes) {
+      $error = \error_get_last();
+      \error_clear_last();
+      throw new \RuntimeException($error['message'] ? $error['message'] : 'Unknown stream write error.');
+    }
+    // if (DEBUG) save bytes to stats 
     return $bytes;
+  }
+  
+  /**
+   * Binary-safe stream read.
+   * 
+   * @see \fread()
+   * 
+   * @param int $size
+   * @return string
+   */
+  protected function fread(int $size = 1500) : string {
+    return @\fread($this->stream, $size);
+  }
+  
+  /**
+   * Binary-safe stream write.
+   * 
+   * @see \fwrite()
+   * 
+   * @param string $binary
+   * @return number|bool
+   */
+  protected function fwrite(string $binary) {
+    return @\fwrite($this->stream, $binary, \strlen($binary));
   }
   
   protected static $getters = [
@@ -91,7 +184,7 @@ class Connection {
   public function __set(string $name, $value) : void {
     $method_name = "set" . \ucfirst($name);
     if (method_exists($this, $method_name)) {
-      $this->$method_name();
+      $this->$method_name($value);
     }
   }
   
@@ -118,14 +211,14 @@ class Connection {
   
   protected function setReadBuffer(int $size) {
     $this->readBuffer = $size;
-    if (\stream_set_read_buffer($this->stream, $size) !== 0) {
+    if (\stream_set_read_buffer($this->stream, $this->readBuffer) !== 0) {
       $this->logger->error("Failed to set stream read buffer to: {$this->readBuffer}");
     }
   }
   
   protected function setWriteBuffer(int $size) {
     $this->writeBuffer = $size;
-    if (\stream_set_write_buffer($this->stream, $size) !== 0) {
+    if (\stream_set_write_buffer($this->stream, $this->writeBuffer) !== 0) {
       $this->logger->error("Failed to set stream write buffer to: {$this->writeBuffer}");
     }
   }
