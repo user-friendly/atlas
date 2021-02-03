@@ -81,6 +81,9 @@ class Client {
       throw new \RuntimeException("Client: failed to connect to {$this->socket_url}. Give up.");
     }
     
+    $conn = new Connection($this->socket);
+    
+    
     // For the time being.
     \stream_set_blocking($this->socket, TRUE);
     \stream_set_timeout($this->socket, $this->socket_timeout);

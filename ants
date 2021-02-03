@@ -1,8 +1,8 @@
-#!/usr/bin/env php
-<?php
+#!/usr/bin/env bash
 
-define('DEBUG', TRUE);
+PHP_EXEC="/usr/bin/php"
 
-require __DIR__ . '/vendor/autoload.php';
+# https://stackoverflow.com/a/17744637/1102191
+APP_DIR="$(cd -P -- "$(dirname -- "$0")" && pwd -P)"
 
-return (new \Ants\Main())->run();
+$PHP_EXEC "$APP_DIR/ants.php" "$@"

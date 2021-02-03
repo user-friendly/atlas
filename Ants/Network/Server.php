@@ -8,6 +8,7 @@ namespace Ants\Network;
 
 use Ants\Main;
 use Ants\Logger\LoggerTrait;
+use Ants\PDO\Dummy;
 
 class Server {
   use LoggerTrait;
@@ -79,6 +80,27 @@ class Server {
     if ($new_client = @\stream_socket_accept($this->socket, 0)) {
       $this->stat_total_all_time++;
       $this->logger->debug("client connected to server! (stat: {$this->stat_total_all_time})");
+      
+      
+      \stream_set_blocking($new_client, TRUE);
+      \stream_set_timeout($new_client, 60);
+      
+      $payload = [];
+      for ($i = 0; $i < 4; $i++) {
+        $payload[] = Dummy::generateDummyPayload_String();
+      }
+      
+      foreach ($payload as $binary) {
+        $this->logger->debug("Send first packet of 256 bytes");
+        // Length given, just in case magic quotes are still around.
+        $bytes = @\fwrite($new_client, $binary, \strlen($binary));
+        if ($bytes === FALSE) {
+          var_dump(error_get_last());
+        }
+        \sleep(5);
+      }
+      $this->logger->debug("Done with test");
+      die();
       
       // FIXME The handshake needs to be moved out of here and should not block.
       // Temporary set blocking mode, till the handshake is complete.

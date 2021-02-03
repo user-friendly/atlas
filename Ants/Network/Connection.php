@@ -41,9 +41,40 @@ class Connection {
   public function __construct($stream) {
     $this->logger = static::getLogger();
     
-    if (is_resource($stream)) {
+    if (!is_resource($stream)) {
       throw new \RuntimeException("Connection needs a valid resource.");
     }
+    $this->stream = $stream;
+    
+//     $buff_size = \socket_get_option($this->stream, SOL_SOCKET, SO_RCVBUF);
+//     if ($buff_size !== FALSE) {
+//       $this->logger->debug("recv buffer size {$buff_size}");
+//     }
+//     else {
+//       $this->logger->error("failed to get recv buff size");
+//     }
+    $this->setBlockMode(TRUE);
+    $this->setTimeout(60);
+    $this->setReadBuffer(1024);
+    
+    $this->logger->debug("First read of 512 bytes...");
+    $msg  = \fread($this->stream, 512);
+    $bytes = \count($msg);
+    $this->logger->debug("Read $bytes.");
+    
+    $this->logger->debug("First read of 512 bytes...");
+    $msg  = \fread($this->stream, 512);
+    $bytes = \count($msg);
+    $this->logger->debug("Read $bytes.");
+    
+    die();
+  }
+  
+  protected function fwrite($binary) {
+    // Length given, just in case magic quotes are still around.
+    $bytes = @\fwrite($this->stream, $binary, \strlen($binary));
+    // TODO Add bytes to stats, if DEBUG is on.
+    return $bytes;
   }
   
   protected static $getters = [
