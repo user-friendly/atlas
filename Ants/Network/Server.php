@@ -130,6 +130,7 @@ class Server {
    * Clenup invalid client connections.
    */
   protected function handleCleanup() : void {
+    // FIXME Do cleanup less frequently. Set a timer, or something.
     foreach ($this->connections as &$connection) {
       if (!$connection->isValid()) {
         $connection = NULL;
