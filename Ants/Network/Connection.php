@@ -14,6 +14,9 @@ use Ants\Logger\LoggerTrait;
  */
 class Connection {
   use LoggerTrait;
+  
+  const MARK_HELLO = 0x0002;
+  const MARK_BYE   = 0x0004;
 
   /**
    * Stream resource.
@@ -27,25 +30,36 @@ class Connection {
   protected $timeout;
   
   /**
-   * Stream native read buffer size.
+   * Stream read size.
    * 
    * @var int
    */
-  protected $readBuffer = NULL;
+  protected $readSize = NULL;
   
   /**
-   * Stream native write buffer size.
+   * Stream write size.
    * 
    * @var int
    */
-  protected $writeBuffer = NULL;
+  protected $writeSize = NULL;
   
   /**
-   * Stream native chunk size size.
+   * Unbound read buffer.
    * 
-   * @var int
+   * @var string
    */
-  protected $​chunkSize = NULL;
+  protected $readBuffer = '';
+  
+  /**
+   * Unbound write buffer.
+   * 
+   * @var string
+   */
+  protected $writeBuffer = '';
+  
+  protected static $getters = [
+    "blockMode", "timeout", "readSize", "writeSize",
+  ];
   
   /**
    * Connection constructor. 
@@ -53,7 +67,7 @@ class Connection {
    * @param resource $stream
    *   A stream resource, ready for I/O.
    */
-  public function __construct($stream, $blockMode = TRUE, $timeout = 60) {
+  public function __construct($stream, $blockMode = TRUE, $timeout = 60, $readSize = 1500, $writeSize = 1500) {
     $this->logger = static::getLogger();
     
     if (!is_resource($stream)) {
@@ -64,30 +78,59 @@ class Connection {
     // Setup stream properties.
     $this->setBlockMode($blockMode);
     $this->setTimeout($timeout);
-    
-    // No idea what the following buffers will change, in terms of performance.
-    // Just let them be the default.
-    //$this->setReadBuffer($readBuffer);
-    // Doesn't seem to work (on my machine, PHP 7.3).
-    // $this->setWriteBuffer($writeBuffer);
-    // It seems chunk size sets the maximum packet size. If a packet larger than
-    // chunk is received, it will unblock a blocked \fread() and a chunk sized
-    // string will be returned.
-    //$this->setChunkSize($chunkSize);
+    $this->setReadSize($readSize);
+    $this->setWriteSize($writeSize);
   }
   
-  public function doReadTestAndDie() {
-    $this->logger->debug("Consume 512 bytes...");
-    $msg  = \fread($this->stream, 512);
-    $bytes = \strlen($msg);
-    $this->logger->debug("Read $bytes.");
+  public function receive() {
     
-    $this->logger->debug("First read of 512 bytes...");
-    $msg  = \fread($this->stream, 512);
-    $bytes = \strlen($msg);
-    $this->logger->debug("Read $bytes.");
+  }
+  
+  public function process() {
     
-    die();
+  }
+  
+  public function send() {
+    
+  }
+  
+  protected function todoRenameMe() {
+    // FIXME The handshake needs to be moved out of here and should not block.
+    // Temporary set blocking mode, till the handshake is complete.
+    \stream_set_blocking($new_stream, TRUE);
+    \stream_set_timeout($new_stream, 1);
+    if ($this->readHello($new_stream)) {
+      
+      \stream_set_blocking($new_stream, FALSE);
+      \stream_set_timeout($new_stream, $this->client_socket_timeout);
+      
+      $this->logger->debug("handshake successful, say hello");
+      // Send out a "nice to meet you".
+      $this->writeBuffer($new_stream, "Hello from the daemon ({$this->main->getProcess()->pid})!");
+      
+      $this->client_sockets[] = $new_stream;
+    }
+    else {
+      \fclose($new_stream);
+    }
+  }
+  
+  protected function readHello($socket) : bool {
+    $hello = $this->readBuffer($socket, 2);
+    if ($hello && \strlen($hello) == 2) {
+      $mark = (int) @unpack("nSINT", $hello)['SINT'];
+      if ($mark == static::MARK_HELLO) {
+        return TRUE;
+      }
+      else {
+        $hex_header = \dechex($mark);
+        $this->logger->error("invalid HELLO mark (0x{$hex_header}), disconnecting client.");
+      }
+    }
+    else {
+      $this->logger->error("failed to read HELLO mark, disconnecting client.");
+    }
+    return FALSE;
   }
   
   /**
@@ -108,9 +151,10 @@ class Connection {
     if ($binary === FALSE) {
       $error = \error_get_last();
       \error_clear_last();
+      $this->fclose();
       throw new \RuntimeException($error['message'] ? $error['message'] : 'Unknown stream read error.');
     }
-    // if (DEBUG) save bytes to stats 
+    // TODO In DEBUG mode, save byte count to stats
     return $binary;
   }
   
@@ -136,44 +180,30 @@ class Connection {
     else if (!is_string($binary)) {
       throw new \RuntimeException("Binary bust be a string or an array of characters");
     }
-    $bytes = $this->fwrite($binary);
-    if (\strlen($binary) !== $bytes) {
+    $binary = $this->fwrite($binary);
+    if (\strlen($binary) !== $binary) {
       $error = \error_get_last();
       \error_clear_last();
+      $this->fclose();
       throw new \RuntimeException($error['message'] ? $error['message'] : 'Unknown stream write error.');
     }
-    // if (DEBUG) save bytes to stats 
-    return $bytes;
+    // TODO In DEBUG mode, save byte count to stats
+    return $binary;
   }
   
   /**
-   * Binary-safe stream read.
+   * Check whether the connection is valid.
    * 
-   * @see \fread()
+   * A valid connection is one that has a stream resources and is connected to
+   * a client.
    * 
-   * @param int $size
-   * @return string
+   * @return boolean
+   *   True if the connection is valid, false otherwise.
    */
-  protected function fread(int $size = 1500) : string {
-    return @\fread($this->stream, $size);
+  public function isValid() {
+    return \is_resource($this->stream) && !\feof($this->stream);
   }
-  
-  /**
-   * Binary-safe stream write.
-   * 
-   * @see \fwrite()
-   * 
-   * @param string $binary
-   * @return number|bool
-   */
-  protected function fwrite(string $binary) {
-    return @\fwrite($this->stream, $binary, \strlen($binary));
-  }
-  
-  protected static $getters = [
-    "blockMode", "timeout", "readBuffer", "writeBuffer", "chunkSize",
-  ];
-  
+
   public function __get(string $name) {
     if (in_array($name, static::$getters)) {
       return $this->$name;
@@ -195,6 +225,52 @@ class Connection {
     return NULL;
   }
   
+  /**
+   * Binary-safe stream read.
+   *
+   * @see \fread()
+   *
+   * @param int $size
+   * @return string
+   */
+  protected function fread(int $size = 1500) : string {
+    return @\fread($this->stream, $size);
+  }
+  
+  /**
+   * Binary-safe stream write.
+   *
+   * @see \fwrite()
+   *
+   * @param string $binary
+   * @return number|bool
+   */
+  protected function fwrite(string $binary) {
+    return @\fwrite($this->stream, $binary, \strlen($binary));
+  }
+  
+  /**
+   * Checks whether the stream reached EOF.
+   * 
+   * @see \feof()
+   * 
+   * @return boolean
+   */
+  protected function feof() {
+    return \feof($this->stream);
+  }
+  
+  /**
+   * Closes the stream.
+   * 
+   * @see \fclose()
+   * 
+   * @return boolean
+   */
+  protected function fclose() {
+    return \fclose($this->stream);
+  }
+
   protected function setBlockMode(bool $blocking) {
     $this->blockMode = $blocking;
     if (!\stream_set_blocking($this->stream, $this->blockMode)) {
@@ -209,25 +285,12 @@ class Connection {
     }
   }
   
-  protected function setReadBuffer(int $size) {
-    $this->readBuffer = $size;
-    if (\stream_set_read_buffer($this->stream, $this->readBuffer) !== 0) {
-      $this->logger->error("Failed to set stream read buffer to: {$this->readBuffer}");
-    }
+  protected function setReadSize(int $size) {
+    $this->readSize = $size;
   }
   
-  protected function setWriteBuffer(int $size) {
-    $this->writeBuffer = $size;
-    if (\stream_set_write_buffer($this->stream, $this->writeBuffer) !== 0) {
-      $this->logger->error("Failed to set stream write buffer to: {$this->writeBuffer}");
-    }
-  }
-  
-  protected function setChunkSize(int $size) {
-    $this->chunkSize = $size;
-    if (\stream_set_chunk_size($this->stream, $size) === FALSE) {
-      $this->logger->error("Failed to set stream chunk size to: {$this->chunkSize}");
-    }
+  protected function setWriteSize(int $size) {
+    $this->writeSize = $size;
   }
   
   public static function debugStreamInfo($stream, Logger $logger) {
