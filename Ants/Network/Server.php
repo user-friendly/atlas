@@ -61,7 +61,7 @@ class Server {
    * @var array
    */
   protected $stats = [
-    'total_client_connections' => 0,
+    'client_connections' => 0,
   ];
   
   // Not really used (not displayed, but populated?).
@@ -89,7 +89,7 @@ class Server {
       
       $this->handleConnections();
       
-      $this->handleCleanup();
+      $this->cleanup();
       
       // Yield CPU time only when there's nothing to do. 
       if (empty($this->connections)) {
@@ -105,10 +105,10 @@ class Server {
   protected function accept() : void {
     if ($new_stream = @\stream_socket_accept($this->socket, 60)) {
       if (DEBUG) {
-        $this->stats['total_client_connections']++;
+        $this->stats['client_connections']++;
       }
       $this->logger->debug("client connected to server");
-      $this->connections[] = new Connection($new_stream);
+      $this->connections[] = new Connection($new_stream, FALSE, $this->connectionTimeoutDefault);
     }
   }
   
@@ -129,16 +129,18 @@ class Server {
   /**
    * Clenup invalid client connections.
    */
-  protected function handleCleanup() : void {
+  protected function cleanup() : void {
     // FIXME Do cleanup less frequently. Set a timer, or something.
     foreach ($this->connections as &$connection) {
       if (!$connection->isValid()) {
         $connection = NULL;
       }
     }
+    
     if (DEBUG) $old_count = count($this->connections);
     $this->connections = array_filter($this->connections);
     if (DEBUG) $new_count = count($this->connections);
+    
     $this->logger->debug("clients cleaned up " . ($old_count - $new_count));
   }
   
@@ -176,7 +178,7 @@ class Server {
       $this->logger->error("failed to close socket.");
     }
     
-    $this->logger->debug("total client connections: {$this->stats['total_client_connections']}");
+    $this->logger->debug("total client connections: {$this->stats['client_connections']}");
     
     $this->logger->debug("shutdown.");
   }

@@ -128,3 +128,4 @@ class Main {
     return $this->mainProcess;
   }
 }
+

@@ -20,19 +20,37 @@ class Client {
   // The socket path should always be absolute.
   protected $socket_path;
   protected $socket_url;
-  //$this->sock_url = 'tcp://0.0.0.0:9999';
-  protected $socket;
-  // In seconds.
-  protected $socket_timeout = 60;
   
-  protected $readLength = 1024;
-  // Not used at the moment.
-  protected $writeLength = 1024;
+  /**
+   * Connection.
+   * 
+   * @var \Ants\Network\Connection
+   */
+  protected $connection;
+  
+  /**
+   * Default client connection timeout.
+   * 
+   * This is the socket I/O max wait time. 
+   *
+   * @var integer
+   */
+  protected $connectionTimeoutDefault = 10;
+  
+  /**
+   * Maximum time to wait for the server to accept the connection.
+   * 
+   * @var integer
+   */
+  protected $connectWaitTime = 60;
   
   // Max connect retries.
   protected $retries = 8;
   
-  protected $stat_total_bytes_sent = 0;
+  protected $stats = [
+    'bytes_read' => 0,
+    'bytes_written' => 0,
+  ];
   
   public function __construct(\Ants\Main $main) {
     $this->logger = static::getLogger();
@@ -52,7 +70,9 @@ class Client {
     
     $this->connect();
     
-    $this->sendTestPayload();
+    while ($this->connection->isValid()) {
+      $this->handleConnection();
+    }
     
     // At this point, this object is not longer an invariant.
     $this->shutdown();
@@ -60,8 +80,17 @@ class Client {
     return \Ants\Main::EXIT_SUCCESS;
   }
   
+  // TODO Can be abstracted away, for Server & Client.
+  protected function handleConnection() {
+    $this->connection->receive();
+    
+    $this->connection->process();
+    
+    $this->connection->send();
+  }
+  
   protected function connect() : void {
-    $this->logger->debug("Client: connect to {$this->socket_url}");
+    $this->logger->debug("connect to {$this->socket_url}");
     
     $this->socket = FALSE;
     for ($retries = 0; $retries < $this->retries; $retries++) {
@@ -72,83 +101,25 @@ class Client {
         break;
       }
       else {
-        $this->logger->error("Client: failed to connect to $this->socket_url, error: $errstr ($errno).");
-        $this->logger->debug("Client: retry connection ($retries)...");
+        $this->logger->error("failed to connect to $this->socket_url, error: $errstr ($errno).");
+        $this->logger->debug("retry connection ($retries)...");
         $this->main->getProcess()->sleep(\mt_rand(50, 500) / 1000);
       }
     }
     if (!$this->socket) {
-      throw new \RuntimeException("Client: failed to connect to {$this->socket_url}. Give up.");
+      throw new \RuntimeException("failed to connect to {$this->socket_url}. Give up.");
     }
     
-    $conn = new Connection($this->socket);
-    $conn->doReadTestAndDie();
+    $this->connection = new Connection($this->socket, TRUE, $this->connectionTimeoutDefault);
     
-    
-    // For the time being.
-    \stream_set_blocking($this->socket, TRUE);
-    \stream_set_timeout($this->socket, $this->socket_timeout);
-    
-    $this->logger->debug("Client: connected after {$retries} retries.");
-    
-//     if (0 != \stream_set_write_buffer($this->socket, 0)) {
-//       $this->logger->error("Client: failed to set write buffer to 0.");
-//     }
+    $this->logger->debug("connected after {$retries} retries.");
   }
   
-  protected function shutdown() {
+  public function shutdown() {
     if (!\fclose($this->socket)) {
-      $this->logger->error("Client: failed to close remote socket $this->socket_url");
+      $this->logger->error("failed to close remote socket $this->socket_url");
     }
-    $this->logger->debug("Client: shutdown. Total bytes sent: {$this->stat_total_bytes_sent}");
-  }
-  
-  protected function write($data) {
-    $bytes = \fwrite($this->socket, $data);
-    $this->stat_total_bytes_sent += $bytes;
-    return $bytes;
-  }
-  
-  protected function writeHello() {
-    $this->write(pack('n', Server::MARK_HELLO));
-  }
-  
-  protected function read() : string {
-    return \fread($this->socket, $this->readLength);
-  }
-  
-  protected function sendTestPayload() : void {
-    $this->writeHello();
-    // If the server doesn't close the connection, we're good.
-    $this->logger->debug("Client: handshake successful, wait for hello.");
-    
-    if ($recv_buff = $this->read()) {
-      $this->logger->debug("Client: received from server: $recv_buff");
-    }
-    
-    $this->write($this->getMessage_Hello());
-    
-//     $this->write("recv pdo:\n\n");
-//     $this->write();
-//     $this->write("\n\n");
-    
-//     for ($i = 0; $i < 3; $i++) {
-//       $this->logger->debug("Client: send date message.");
-//       $this->write($this->getMessage_Date());
-//       \fflush($this->socket);
-//       $this->main->getProcess()->sleep(1);
-//     }
-  }
-  
-  protected function getMessage_Hello() {
-    return "\n\nHello from pid {$this->main->getProcess()->pid}, via a Unix socket.\n";
-  }
-  
-  protected function getMessage_Date() {
-    return "\t({$this->main->getProcess()->pid}) Date is: " . \date(DATE_ATOM) . "\n";
-  }
-  
-  protected function getData() {
-    return new Dummy();
+    // TODO Do the stats. It's fun.
+    // $this->logger->debug("shutdown. Total bytes sent: {$this->stats}");
   }
 }

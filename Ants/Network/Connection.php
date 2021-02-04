@@ -4,6 +4,9 @@
  * Connection class file.
  */
 
+// FIXME Inconsistent error handling - are you gonna throw exceptions or return
+//       FALSE?!
+
 namespace Ants\Network;
 
 use Monolog\Logger;
@@ -80,57 +83,70 @@ class Connection {
     $this->setTimeout($timeout);
     $this->setReadSize($readSize);
     $this->setWriteSize($writeSize);
-  }
-  
-  public function receive() {
     
+    // TODO Tmp state
+    $this->state = 0;
   }
   
+  /**
+   * Receive data.
+   */
+  public function receive() {
+    $this->readBuffer .= $this->readSome($this->readSize);
+  }
+  
+  /**
+   * Process connection state.
+   */
   public function process() {
     
+    switch ($this->state) {
+      case 0:
+        $this->append(\pack('n', static::MARK_HELLO));
+        $this->state = 1;
+        break;
+      case 1:
+        $binary = $this->consume(2);
+        if ($binary !== FALSE) {
+          if (static::MARK_HELLO === ((int) @unpack("nSINT", $binary)['SINT'])) {
+            // Received Hello from remote end.
+            $this->state = 2;
+          }
+          else {
+            $hex_header = \dechex($binary);
+            $this->logger->error("invalid HELLO mark (0x{$hex_header}), disconnecting");
+            $this->fclose();
+          }
+        }
+        break;
+      case 2:
+        // ...guess state 2 is just this message.
+        $this->debug("handshake successful");
+        $this->state = 3;
+        break;
+      case 3:
+        // TODO What now?
+        break;
+      default:
+        $this->fclose();
+        throw new \RuntimeException("Unhandled connection state.");
+        break;
+    }
   }
   
+  /**
+   * Sends data to the receiver.
+   */
   public function send() {
-    
-  }
-  
-  protected function todoRenameMe() {
-    // FIXME The handshake needs to be moved out of here and should not block.
-    // Temporary set blocking mode, till the handshake is complete.
-    \stream_set_blocking($new_stream, TRUE);
-    \stream_set_timeout($new_stream, 1);
-    if ($this->readHello($new_stream)) {
-      
-      \stream_set_blocking($new_stream, FALSE);
-      \stream_set_timeout($new_stream, $this->client_socket_timeout);
-      
-      $this->logger->debug("handshake successful, say hello");
-      // Send out a "nice to meet you".
-      $this->writeBuffer($new_stream, "Hello from the daemon ({$this->main->getProcess()->pid})!");
-      
-      $this->client_sockets[] = $new_stream;
+    if (\strlen($this->writeBuffer) > 0) {
+      // Peek the packet to be sent.
+      $binary = \substr($this->writeBuffer, 0, $this->writeSize);
+      // TODO Catch exception?
+      $this->sendSome($binary);
+      // Consume bytes from the write buffer. Should be an expensive memory
+      // allocation operation.
+      $this->writeBuffer = \substr($this->writeBuffer, $this->writeSize);
     }
-    else {
-      \fclose($new_stream);
-    }
-  }
-  
-  protected function readHello($socket) : bool {
-    $hello = $this->readBuffer($socket, 2);
-    if ($hello && \strlen($hello) == 2) {
-      $mark = (int) @unpack("nSINT", $hello)['SINT'];
-      if ($mark == static::MARK_HELLO) {
-        return TRUE;
-      }
-      else {
-        $hex_header = \dechex($mark);
-        $this->logger->error("invalid HELLO mark (0x{$hex_header}), disconnecting client.");
-      }
-    }
-    else {
-      $this->logger->error("failed to read HELLO mark, disconnecting client.");
-    }
-    return FALSE;
   }
   
   /**
@@ -226,6 +242,31 @@ class Connection {
   }
   
   /**
+   * Consumes exactly $size bytes from the read buffer.
+   * 
+   * @param int $size
+   * @return string|boolean
+   *   Returns the binary string or FALSE if buffer was less than $size.
+   */
+  protected function consume(int $size) {
+    if (\strlen($this->readBuffer) >= $size) {
+      $binary = \substr($this->readBuffer, 0, $size);
+      $this->readBuffer = \substr($this->readBuffer, $size);
+      return $binary;
+    }
+    return FALSE;
+  }
+  
+  /**
+   * Append to the write buffer.
+   * 
+   * @param string $binary
+   */
+  protected function append(string $binary) {
+    $this->writeBuffer .= $binary;
+  }
+  
+  /**
    * Binary-safe stream read.
    *
    * @see \fread()
@@ -234,7 +275,7 @@ class Connection {
    * @return string
    */
   protected function fread(int $size = 1500) : string {
-    return @\fread($this->stream, $size);
+    return \fread($this->stream, $size);
   }
   
   /**
@@ -246,7 +287,7 @@ class Connection {
    * @return number|bool
    */
   protected function fwrite(string $binary) {
-    return @\fwrite($this->stream, $binary, \strlen($binary));
+    return \fwrite($this->stream, $binary, \strlen($binary));
   }
   
   /**
@@ -318,4 +359,3 @@ class Connection {
     }
   }
 }
-
