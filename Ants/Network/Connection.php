@@ -64,6 +64,9 @@ class Connection {
     "blockMode", "timeout", "readSize", "writeSize",
   ];
   
+  // FIXME Temporary
+  protected $state = 0;
+  
   /**
    * Connection constructor. 
    * 
@@ -83,45 +86,55 @@ class Connection {
     $this->setTimeout($timeout);
     $this->setReadSize($readSize);
     $this->setWriteSize($writeSize);
-    
-    // TODO Tmp state
-    $this->state = 0;
   }
   
   /**
    * Receive data.
    */
-  public function receive() {
-    $this->readBuffer .= $this->readSome($this->readSize);
+  public function receive() : void {
+    $read_buff = $this->readSome($this->readSize);
+    
+    if (\strlen($read_buff)) {
+      $this->readBuffer .= $read_buff;
+      
+      if (DEBUG) {
+        $sz = \strlen($read_buff);
+        $hex = \bin2hex($read_buff);
+        $this->logger->debug("received {$sz} bytes: {$hex}");
+      }
+    }
   }
   
   /**
    * Process connection state.
    */
-  public function process() {
-    
+  public function process() : void {
     switch ($this->state) {
       case 0:
         $this->append(\pack('n', static::MARK_HELLO));
         $this->state = 1;
+        
+        $this->logger->debug("Hello mark sent");
         break;
       case 1:
         $binary = $this->consume(2);
         if ($binary !== FALSE) {
+          $hello_mark_hex = \dechex((int) $binary[0]) . \dechex((int) $binary[1]);
           if (static::MARK_HELLO === ((int) @unpack("nSINT", $binary)['SINT'])) {
             // Received Hello from remote end.
             $this->state = 2;
+            
+            $this->logger->debug("Hello mark received (0x{$hello_mark_hex})");
           }
           else {
-            $hex_header = \dechex($binary);
-            $this->logger->error("invalid HELLO mark (0x{$hex_header}), disconnecting");
+            $this->logger->error("invalid HELLO mark (0x{$hello_mark_hex}), disconnecting");
             $this->fclose();
           }
         }
         break;
       case 2:
         // ...guess state 2 is just this message.
-        $this->debug("handshake successful");
+        $this->logger->debug("handshake successful");
         $this->state = 3;
         break;
       case 3:
@@ -137,7 +150,7 @@ class Connection {
   /**
    * Sends data to the receiver.
    */
-  public function send() {
+  public function send() : void {
     if (\strlen($this->writeBuffer) > 0) {
       // Peek the packet to be sent.
       $binary = \substr($this->writeBuffer, 0, $this->writeSize);
@@ -196,15 +209,15 @@ class Connection {
     else if (!is_string($binary)) {
       throw new \RuntimeException("Binary bust be a string or an array of characters");
     }
-    $binary = $this->fwrite($binary);
-    if (\strlen($binary) !== $binary) {
+    $bytes_written = $this->fwrite($binary);
+    if (\strlen($binary) !== $bytes_written) {
       $error = \error_get_last();
       \error_clear_last();
       $this->fclose();
       throw new \RuntimeException($error['message'] ? $error['message'] : 'Unknown stream write error.');
     }
     // TODO In DEBUG mode, save byte count to stats
-    return $binary;
+    return $bytes_written;
   }
   
   /**

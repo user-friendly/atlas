@@ -96,7 +96,7 @@ class Client {
     for ($retries = 0; $retries < $this->retries; $retries++) {
       $errno = 0;
       $errstr = 'NULL';
-      $this->socket = @\stream_socket_client($this->socket_url, $errno, $errstr, 60, STREAM_CLIENT_CONNECT);
+      $this->socket = @\stream_socket_client($this->socket_url, $errno, $errstr, $this->connectWaitTime, STREAM_CLIENT_CONNECT);
       if ($this->socket) {
         break;
       }
@@ -110,7 +110,7 @@ class Client {
       throw new \RuntimeException("failed to connect to {$this->socket_url}. Give up.");
     }
     
-    $this->connection = new Connection($this->socket, TRUE, $this->connectionTimeoutDefault);
+    $this->connection = new Connection($this->socket, FALSE, $this->connectionTimeoutDefault);
     
     $this->logger->debug("connected after {$retries} retries.");
   }

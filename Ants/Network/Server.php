@@ -103,7 +103,7 @@ class Server {
   }
   
   protected function accept() : void {
-    if ($new_stream = @\stream_socket_accept($this->socket, 60)) {
+    if ($new_stream = @\stream_socket_accept($this->socket, 0)) {
       if (DEBUG) {
         $this->stats['client_connections']++;
       }
@@ -138,10 +138,16 @@ class Server {
     }
     
     if (DEBUG) $old_count = count($this->connections);
-    $this->connections = array_filter($this->connections);
-    if (DEBUG) $new_count = count($this->connections);
     
-    $this->logger->debug("clients cleaned up " . ($old_count - $new_count));
+    $this->connections = array_filter($this->connections);
+    
+    if (DEBUG) {
+      $new_count = count($this->connections);
+      $diff = $old_count - $new_count;
+      if ($diff) {
+        $this->logger->debug("clients cleaned up $diff");
+      }
+    }
   }
   
   protected function listen() : void {
