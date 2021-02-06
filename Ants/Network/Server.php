@@ -75,8 +75,6 @@ class Server {
     $this->socketPath = \getcwd() . '/php-daemon.sock';
     $this->socketUrl = "unix://{$this->socketPath}";
     
-    //$this->sock_url = 'tcp://0.0.0.0:9999';
-    
     $this->main->getProcess()->addSignalHandler([$this, "shutdown"]);
   }
   
@@ -175,7 +173,7 @@ class Server {
   }
   
   public function shutdown() : void {
-    // TODO Do we need to do that for a Unix socket? It goes both ways...
+    // TODO Do we need to do that for a Unix socket?
     if (!\stream_socket_shutdown($this->socket, STREAM_SHUT_RD)) {
       $this->logger->error("failed to shutdown socket.");
     }

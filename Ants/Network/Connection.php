@@ -77,7 +77,7 @@ class Connection {
     $this->logger = static::getLogger();
     
     if (!is_resource($stream)) {
-      throw new \RuntimeException("Connection needs a valid resource.");
+      throw new \RuntimeException("Connection needs a valid stream resource.");
     }
     $this->stream = $stream;
     
@@ -86,6 +86,28 @@ class Connection {
     $this->setTimeout($timeout);
     $this->setReadSize($readSize);
     $this->setWriteSize($writeSize);
+  }
+  
+  /**
+   * Close the stream connection.
+   * 
+   * Optionally, flush the write buffer.
+   * 
+   * @param bool $flush
+   *   Attempt to send any remaining data. Depending on what blocking mode the
+   *   stream is in, flushing is potentially a blocking operation.
+   * 
+   * @return bool
+   *   Returns TRUE if the stream was closed successfully. FALSE otherwise.
+   */
+  public function close(bool $flush = FALSE) : bool {
+    if ($flush) {
+      // Attempt to flush the write buffer.
+      while ($this->writeBuffer) {
+        $this->send();
+      }
+    }
+    return $this->fclose();
   }
   
   /**
@@ -117,9 +139,10 @@ class Connection {
         $this->logger->debug("Hello mark sent");
         break;
       case 1:
+        // FIXME Magic number.
         $binary = $this->consume(2);
         if ($binary !== FALSE) {
-          $hello_mark_hex = \dechex((int) $binary[0]) . \dechex((int) $binary[1]);
+          $hello_mark_hex = \bin2hex($binary);
           if (static::MARK_HELLO === ((int) @unpack("nSINT", $binary)['SINT'])) {
             // Received Hello from remote end.
             $this->state = 2;
@@ -139,6 +162,17 @@ class Connection {
         break;
       case 3:
         // TODO What now?
+        $this->append(\pack('n', static::MARK_BYE));
+        $this->state = 4;
+        break;
+      case 4:
+        // FIXME Magic number.
+        $binary = $this->peek(2);
+        if (static::MARK_BYE === ((int) @unpack("nSINT", $binary)['SINT'])) {
+          $bye_mark_hex = \bin2hex($binary);
+          $this->logger->debug("Bye mark received (0x{$bye_mark_hex})");
+          $this->close();
+        }
         break;
       default:
         $this->fclose();
@@ -271,6 +305,22 @@ class Connection {
   }
   
   /**
+   * Peek exactly $size bytes from the read buffer.
+   * 
+   * Unlike \Ants\Network\Connection::consume(), the read buffer is not altered.
+   * 
+   * @param int $size
+   * @return string|boolean
+   *   Returns the binary string or FALSE if buffer was less than $size.
+   */
+  protected function peek(int $size) {
+    if (\strlen($this->readBuffer) >= $size) {
+      return \substr($this->readBuffer, 0, $size);
+    }
+    return FALSE;
+  }
+  
+  /**
    * Append to the write buffer.
    * 
    * @param string $binary
@@ -310,7 +360,7 @@ class Connection {
    * 
    * @return boolean
    */
-  protected function feof() {
+  public function feof() {
     return \feof($this->stream);
   }
   

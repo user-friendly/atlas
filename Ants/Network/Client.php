@@ -6,8 +6,8 @@
 
 namespace Ants\Network;
 
+use Ants\Main;
 use Ants\Logger\LoggerTrait;
-use Ants\PDO\Dummy;
 
 class Client {
   use LoggerTrait;
@@ -31,11 +31,11 @@ class Client {
   /**
    * Default client connection timeout.
    * 
-   * This is the socket I/O max wait time. 
+   * This is the stream I/O max wait time, in blocking mode only.
    *
    * @var integer
    */
-  protected $connectionTimeoutDefault = 10;
+  protected $connectionTimeoutDefault = 60;
   
   /**
    * Maximum time to wait for the server to accept the connection.
@@ -60,8 +60,6 @@ class Client {
     $this->socket_path = \getcwd() . '/php-daemon.sock';
     $this->socket_url = "unix://{$this->socket_path}";
     
-    //$this->socket_url = 'tcp://0.0.0.0:9999';
-    
     $this->main->getProcess()->addSignalHandler([$this, "shutdown"]);
   }
   
@@ -74,10 +72,9 @@ class Client {
       $this->handleConnection();
     }
     
-    // At this point, this object is not longer an invariant.
     $this->shutdown();
     
-    return \Ants\Main::EXIT_SUCCESS;
+    return Main::EXIT_SUCCESS;
   }
   
   // TODO Can be abstracted away, for Server & Client.
@@ -92,12 +89,12 @@ class Client {
   protected function connect() : void {
     $this->logger->debug("connect to {$this->socket_url}");
     
-    $this->socket = FALSE;
+    $socket = NULL;
     for ($retries = 0; $retries < $this->retries; $retries++) {
       $errno = 0;
       $errstr = 'NULL';
-      $this->socket = @\stream_socket_client($this->socket_url, $errno, $errstr, $this->connectWaitTime, STREAM_CLIENT_CONNECT);
-      if ($this->socket) {
+      $socket = @\stream_socket_client($this->socket_url, $errno, $errstr, $this->connectWaitTime, STREAM_CLIENT_CONNECT);
+      if ($socket) {
         break;
       }
       else {
@@ -106,20 +103,21 @@ class Client {
         $this->main->getProcess()->sleep(\mt_rand(50, 500) / 1000);
       }
     }
-    if (!$this->socket) {
+    if (!$socket) {
       throw new \RuntimeException("failed to connect to {$this->socket_url}. Give up.");
     }
     
-    $this->connection = new Connection($this->socket, FALSE, $this->connectionTimeoutDefault);
+    $this->connection = new Connection($socket, FALSE, $this->connectionTimeoutDefault);
     
     $this->logger->debug("connected after {$retries} retries.");
   }
   
   public function shutdown() {
-    if (!\fclose($this->socket)) {
-      $this->logger->error("failed to close remote socket $this->socket_url");
+    if ($this->connection->isValid()) {
+      $this->logger->debug("closing connection");
+      $this->connection->close();
     }
-    // TODO Do the stats. It's fun.
+    // TODO Do the stats.
     // $this->logger->debug("shutdown. Total bytes sent: {$this->stats}");
   }
 }
