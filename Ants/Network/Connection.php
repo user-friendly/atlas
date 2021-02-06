@@ -11,6 +11,8 @@ namespace Ants\Network;
 
 use Monolog\Logger;
 use Ants\Logger\LoggerTrait;
+use Ants\Network\State\StateInterface;
+use Ants\Network\State\HelloState;
 
 /**
  * A stream connection class.
@@ -18,7 +20,6 @@ use Ants\Logger\LoggerTrait;
 class Connection {
   use LoggerTrait;
   
-  const MARK_HELLO = 0x0002;
   const MARK_BYE   = 0x0004;
 
   /**
@@ -64,8 +65,12 @@ class Connection {
     "blockMode", "timeout", "readSize", "writeSize",
   ];
   
-  // FIXME Temporary
-  protected $state = 0;
+  /**
+   * Current state.
+   * 
+   * @var \Ants\Network\State\StateInterface
+   */
+  protected $state;
   
   /**
    * Connection constructor. 
@@ -86,6 +91,8 @@ class Connection {
     $this->setTimeout($timeout);
     $this->setReadSize($readSize);
     $this->setWriteSize($writeSize);
+    
+    $this->state = new HelloState($this);
   }
   
   /**
@@ -131,6 +138,11 @@ class Connection {
    * Process connection state.
    */
   public function process() : void {
+    
+    $this->state->handle($this);
+    
+    return;
+    
     switch ($this->state) {
       case 0:
         $this->append(\pack('n', static::MARK_HELLO));
@@ -184,7 +196,7 @@ class Connection {
   /**
    * Sends data to the receiver.
    */
-  public function send() : void {
+  public function send() : self {
     if (\strlen($this->writeBuffer) > 0) {
       // Peek the packet to be sent.
       $binary = \substr($this->writeBuffer, 0, $this->writeSize);
@@ -194,6 +206,17 @@ class Connection {
       // allocation operation.
       $this->writeBuffer = \substr($this->writeBuffer, $this->writeSize);
     }
+    return $this;
+  }
+  
+  /**
+   * Sets the current state.
+   * 
+   * @param StateInterface $state
+   */
+  public function setState(StateInterface $state) : self {
+    $this->state = $state;
+    return $this;
   }
   
   /**
@@ -295,7 +318,7 @@ class Connection {
    * @return string|boolean
    *   Returns the binary string or FALSE if buffer was less than $size.
    */
-  protected function consume(int $size) {
+  public function consume(int $size) {
     if (\strlen($this->readBuffer) >= $size) {
       $binary = \substr($this->readBuffer, 0, $size);
       $this->readBuffer = \substr($this->readBuffer, $size);
@@ -313,7 +336,7 @@ class Connection {
    * @return string|boolean
    *   Returns the binary string or FALSE if buffer was less than $size.
    */
-  protected function peek(int $size) {
+  public function peek(int $size) {
     if (\strlen($this->readBuffer) >= $size) {
       return \substr($this->readBuffer, 0, $size);
     }
@@ -325,8 +348,9 @@ class Connection {
    * 
    * @param string $binary
    */
-  protected function append(string $binary) {
+  public function append(string $binary) : self {
     $this->writeBuffer .= $binary;
+    return $this;
   }
   
   /**
@@ -360,7 +384,7 @@ class Connection {
    * 
    * @return boolean
    */
-  public function feof() {
+  protected function feof() {
     return \feof($this->stream);
   }
   
@@ -375,26 +399,30 @@ class Connection {
     return \fclose($this->stream);
   }
 
-  protected function setBlockMode(bool $blocking) {
+  protected function setBlockMode(bool $blocking) : self {
     $this->blockMode = $blocking;
     if (!\stream_set_blocking($this->stream, $this->blockMode)) {
       $this->logger->error("Failed to set stream blocking mode to: {$this->blockMode}");
     }
+    return $this;
   }
   
-  protected function setTimeout(int $timeout) {
+  protected function setTimeout(int $timeout) : self {
     $this->timeout = $timeout;
     if (!\stream_set_timeout($this->stream, $this->timeout)) {
       $this->logger->error("Failed to set stream timeout to: {$this->timeout}");
     }
+    return $this;
   }
   
-  protected function setReadSize(int $size) {
+  protected function setReadSize(int $size) : self {
     $this->readSize = $size;
+    return $this;
   }
   
-  protected function setWriteSize(int $size) {
+  protected function setWriteSize(int $size) : self {
     $this->writeSize = $size;
+    return $this;
   }
   
   public static function debugStreamInfo($stream, Logger $logger) {

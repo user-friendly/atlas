@@ -17,6 +17,8 @@ use Ants\Logger\LoggerTrait;
 class Main {
   use LoggerTrait;
   
+  const VERSION = '1.0.0';
+  
   const EXIT_SUCCESS = 0;
   const EXIT_FAILURE = 1;
   
