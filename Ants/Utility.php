@@ -26,8 +26,6 @@ class Utility {
     if ($absolute_size < static::KILOBYTE) {
       return "{$size} byte" . ($absolute_size > 1 ? "s" : NULL);
     }
-    // Create a multiplier to preserve the sign of $size.
-    $sign = $absolute_size / $size;
     foreach (['KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'] as $unit) {
       $absolute_size /= static::KILOBYTE;
       $rounded_size = \round($absolute_size, 2);
@@ -36,6 +34,27 @@ class Utility {
       }
     }
     return "{$rounded_size} {$unit}";
+  }
+  
+  /**
+   * Gets the non-FQN class name of an object.
+   * 
+   * @param object|string $thing
+   *   Can either be a string of a FQN class or an object.
+   *    
+   * @return string|FALSE
+   */
+  public static function get_class_name($thing) {
+    if (is_object($thing)) {
+      $thing = \get_class($thing);
+    }
+    else if (!is_string($thing)) {
+      return FALSE;
+    }
+    if ($pos = strrpos($thing, '\\')) {
+      return substr($thing, $pos + 1);
+    }
+    return $thing;
   }
 }
 

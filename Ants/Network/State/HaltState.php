@@ -7,13 +7,11 @@
 namespace Ants\Network\State;
 
 use Ants\Network\Connection;
-use Ants\Logger\LoggerTrait;
 
 /**
  * HaltState class.
  */
-class HaltState implements StateInterface {
-  use LoggerTrait;
+class HaltState extends BaseState {
   
   /**
    * {@inheritDoc}
@@ -21,7 +19,7 @@ class HaltState implements StateInterface {
    * @see \Ants\Network\State\StateInterface::__construct()
    */
   public function __construct(Connection $conn) {
-    $this->logger = static::getLogger();
+    parent::__construct($conn);
   }
 
   /**
@@ -29,7 +27,7 @@ class HaltState implements StateInterface {
    *
    * @see \Ants\Network\State\StateInterface::handle()
    */
-  public function handle(Connection $conn) {
+  public function handle(Connection $conn) : void {
     if ($conn->isValid()) {
       $conn->close();
       $this->logger->debug("Disconnect connection.");

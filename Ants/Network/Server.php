@@ -47,6 +47,20 @@ class Server {
   protected $connections = [];
   
   /**
+   * Connections cleanup frequency (seconds)
+   * 
+   * @var integer
+   */
+  protected $connectionCleanupTime = 5;
+  
+  /**
+   * Timestamp of the last cleanup.
+   * 
+   * @var integer
+   */
+  protected $connectionCleanupLast = 0;
+  
+  /**
    * Default client connection timeout.
    * 
    * @var integer
@@ -56,11 +70,10 @@ class Server {
   /**
    * Server statistics.
    * 
-   * Used only enabled in DEBUG mode.
-   * 
    * @var array
    */
   protected $stats = [
+    // Total connections handled (includes invalid too).
     'client_connections' => 0,
   ];
   
@@ -74,6 +87,9 @@ class Server {
     // The socket path should always be absolute.
     $this->socketPath = \getcwd() . '/php-daemon.sock';
     $this->socketUrl = "unix://{$this->socketPath}";
+    //$this->socketUrl = 'tcp://0.0.0.0:9999';
+    
+    $this->connectionCleanupLast = \time();
     
     $this->main->getProcess()->addSignalHandler([$this, "shutdown"]);
   }
@@ -128,16 +144,22 @@ class Server {
    * Clenup invalid client connections.
    */
   protected function cleanup() : void {
-    // FIXME Do cleanup less frequently. Set a timer, or something.
+    if (\time() - $this->connectionCleanupLast < $this->connectionCleanupTime) {
+      return;
+    }
+    
     foreach ($this->connections as &$connection) {
       if (!$connection->isValid()) {
         $connection = NULL;
       }
     }
     
-    if (DEBUG) $old_count = count($this->connections);
+    if (DEBUG) {
+      $old_count = count($this->connections);
+    }
     
     $this->connections = array_filter($this->connections);
+    $this->connectionCleanupLast = \time();
     
     if (DEBUG) {
       $new_count = count($this->connections);

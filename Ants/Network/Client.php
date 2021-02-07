@@ -18,8 +18,8 @@ class Client {
   protected $main;
   
   // The socket path should always be absolute.
-  protected $socket_path;
-  protected $socket_url;
+  protected $socketPath;
+  protected $socketUrl;
   
   /**
    * Connection.
@@ -57,8 +57,9 @@ class Client {
     $this->main = $main;
     
     // The socket path should always be absolute.
-    $this->socket_path = \getcwd() . '/php-daemon.sock';
-    $this->socket_url = "unix://{$this->socket_path}";
+    $this->socketPath = \getcwd() . '/php-daemon.sock';
+    $this->socketUrl = "unix://{$this->socketPath}";
+    //$this->socketUrl = 'tcp://0.0.0.0:9999';
     
     $this->main->getProcess()->addSignalHandler([$this, "shutdown"]);
   }
@@ -87,28 +88,27 @@ class Client {
   }
   
   protected function connect() : void {
-    $this->logger->debug("connect to {$this->socket_url}");
+    $this->logger->debug("connect to {$this->socketUrl}");
     
     $socket = NULL;
     for ($retries = 0; $retries < $this->retries; $retries++) {
       $errno = 0;
       $errstr = 'NULL';
-      $socket = @\stream_socket_client($this->socket_url, $errno, $errstr, $this->connectWaitTime, STREAM_CLIENT_CONNECT);
+      $socket = @\stream_socket_client($this->socketUrl, $errno, $errstr, $this->connectWaitTime, STREAM_CLIENT_CONNECT);
       if ($socket) {
         break;
       }
       else {
-        $this->logger->error("failed to connect to $this->socket_url, error: $errstr ($errno).");
+        $this->logger->error("failed to connect to $this->socketUrl, error: $errstr ($errno).");
         $this->logger->debug("retry connection ($retries)...");
         $this->main->getProcess()->sleep(\mt_rand(50, 500) / 1000);
       }
     }
     if (!$socket) {
-      throw new \RuntimeException("failed to connect to {$this->socket_url}. Give up.");
+      throw new \RuntimeException("failed to connect to {$this->socketUrl}. Give up.");
     }
     
-    $this->connection = new Connection($socket, FALSE, $this->connectionTimeoutDefault);
-    
+    $this->connection = new Connection($socket, FALSE, 1 /* $this->connectionTimeoutDefault */);
     $this->logger->debug("connected after {$retries} retries.");
   }
   

@@ -120,7 +120,7 @@ class Connection {
   /**
    * Receive data.
    */
-  public function receive() : void {
+  public function receive() : self {
     $read_buff = $this->readSome($this->readSize);
     
     if (\strlen($read_buff)) {
@@ -132,16 +132,17 @@ class Connection {
         $this->logger->debug("received {$sz} bytes: {$hex}");
       }
     }
+    return $this;
   }
   
   /**
    * Process connection state.
    */
-  public function process() : void {
+  public function process() : self {
     
     $this->state->handle($this);
     
-    return;
+    return $this;
     
     switch ($this->state) {
       case 0:
@@ -220,64 +221,6 @@ class Connection {
   }
   
   /**
-   * Read some binary data from stream.
-   * 
-   * Do not use this method to send data unless you know what you're doing.
-   * 
-   * @see \fread()
-   * @see Connection::fread()
-   * 
-   * @param int $size
-   * @throws \RuntimeException
-   * @return string
-   *   Returned binary data.
-   */
-  public function readSome(int $size = 1500) : string {
-    $binary = $this->fread($size);
-    if ($binary === FALSE) {
-      $error = \error_get_last();
-      \error_clear_last();
-      $this->fclose();
-      throw new \RuntimeException($error['message'] ? $error['message'] : 'Unknown stream read error.');
-    }
-    // TODO In DEBUG mode, save byte count to stats
-    return $binary;
-  }
-  
-  /**
-   * Write some binary data to stream.
-   * 
-   * Do not use this method to send data unless you know what you're doing.
-   * 
-   * @see \fwrite()
-   * @see Connection::fwrite()
-   * 
-   * @param string|array $binary
-   *   Bytes to be written, as a string or as an array of bytes. 
-   * @throws \RuntimeException
-   *   In case there's a mismatch between bytes to be written and bytes written.
-   * @return int
-   *   Number of bytes written.
-   */
-  public function sendSome($binary) : int {
-    if (is_array($binary)) {
-      $binary = \implode($binary);
-    }
-    else if (!is_string($binary)) {
-      throw new \RuntimeException("Binary bust be a string or an array of characters");
-    }
-    $bytes_written = $this->fwrite($binary);
-    if (\strlen($binary) !== $bytes_written) {
-      $error = \error_get_last();
-      \error_clear_last();
-      $this->fclose();
-      throw new \RuntimeException($error['message'] ? $error['message'] : 'Unknown stream write error.');
-    }
-    // TODO In DEBUG mode, save byte count to stats
-    return $bytes_written;
-  }
-  
-  /**
    * Check whether the connection is valid.
    * 
    * A valid connection is one that has a stream resources and is connected to
@@ -351,6 +294,82 @@ class Connection {
   public function append(string $binary) : self {
     $this->writeBuffer .= $binary;
     return $this;
+  }
+  
+  /**
+   * Get the current receive buffer size.
+   * 
+   * @return number
+   */
+  public function getRecvSize() {
+    return \strlen($this->readBuffer);
+  }
+  
+  /**
+   * Get the current send buffer size.
+   * 
+   * @return number
+   */
+  public function getSendSize() {
+    return \strlen($this->writeBuffer);
+  }
+  
+  /**
+   * Read some binary data from stream.
+   *
+   * Do not use this method to send data unless you know what you're doing.
+   *
+   * @see \fread()
+   * @see Connection::fread()
+   *
+   * @param int $size
+   * @throws \RuntimeException
+   * @return string
+   *   Returned binary data.
+   */
+  protected function readSome(int $size = 1500) : string {
+    $binary = $this->fread($size);
+    if ($binary === FALSE) {
+      $error = \error_get_last();
+      \error_clear_last();
+      $this->fclose();
+      throw new \RuntimeException($error['message'] ? $error['message'] : 'Unknown stream read error.');
+    }
+    // TODO In DEBUG mode, save byte count to stats
+    return $binary;
+  }
+  
+  /**
+   * Write some binary data to stream.
+   *
+   * Do not use this method to send data unless you know what you're doing.
+   *
+   * @see \fwrite()
+   * @see Connection::fwrite()
+   *
+   * @param string|array $binary
+   *   Bytes to be written, as a string or as an array of bytes.
+   * @throws \RuntimeException
+   *   In case there's a mismatch between bytes to be written and bytes written.
+   * @return int
+   *   Number of bytes written.
+   */
+  protected function sendSome($binary) : int {
+    if (is_array($binary)) {
+      $binary = \implode($binary);
+    }
+    else if (!is_string($binary)) {
+      throw new \RuntimeException("Binary bust be a string or an array of characters");
+    }
+    $bytes_written = $this->fwrite($binary);
+    if (\strlen($binary) !== $bytes_written) {
+      $error = \error_get_last();
+      \error_clear_last();
+      $this->fclose();
+      throw new \RuntimeException($error['message'] ? $error['message'] : 'Unknown stream write error.');
+    }
+    // TODO In DEBUG mode, save byte count to stats
+    return $bytes_written;
   }
   
   /**

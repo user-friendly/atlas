@@ -6,6 +6,8 @@
 
 namespace Ants\Logger;
 
+use Ants\Utility;
+
 /**
  * LoggerTrait.  
  */
@@ -22,7 +24,7 @@ trait LoggerTrait {
    * @return \Monolog\Logger
    */
   public static function getLogger(string $channel = NULL) : \Monolog\Logger {
-    $channel = $channel ?? __CLASS__;
+    $channel = $channel ?? Utility::get_class_name(__CLASS__);
     return LoggerFactory::getLogger($channel);
   }
 }

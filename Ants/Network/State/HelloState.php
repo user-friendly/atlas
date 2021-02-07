@@ -6,14 +6,16 @@
 
 namespace Ants\Network\State;
 
-use Ants\Logger\LoggerTrait;
 use Ants\Network\Connection;
 
 /**
  * HelloState class file.
+ * 
+ * This will be the state that establishes the initial "handshake" - it's to
+ * initiate the application protocol. As with the VersionState, this message
+ * format is not TLV but fixed in size.
  */
-class HelloState implements StateInterface {
-  use LoggerTrait;
+class HelloState extends BaseState {
   
   const MARK_HELLO = 0x0002;
   
@@ -24,22 +26,16 @@ class HelloState implements StateInterface {
    */
   protected $markHello;
   
-//   /**
-//    * State's connection.
-//    * 
-//    * @var \Ants\Network\Connection
-//    */
-//   protected $connection;
-  
   /**
    * {@inheritDoc}
    */
   public function __construct(Connection $conn) {
-    $this->logger = static::getLogger();
+    parent::__construct($conn);
+    
     $this->markHello = \pack('n', static::MARK_HELLO);
     
     // Send the hello mark immediately.
-    $conn->append($this->markHello);
+    $this->connection->append($this->markHello);
   }
 
   /**
@@ -47,21 +43,19 @@ class HelloState implements StateInterface {
    * 
    * @see \Ants\Network\State\StateInterface::handle()
    */
-  public function handle(Connection $conn) {
-    $binary = $conn->peek(\strlen($this->markHello));
+  public function handle(Connection $conn) : void {
+    $binary = $conn->consume(\strlen($this->markHello));
     if (!$binary) {
       return;
     }
     $hello_mark_hex = \bin2hex($binary);
-    if (static::MARK_HELLO === ((int) @unpack("n", $binary)[1])) {
-      $conn->setState(new VersionState($conn));
-      
+    if (static::MARK_HELLO === ((int) @\unpack("n", $binary)[1])) {
       $this->logger->debug("Hello mark received (0x{$hello_mark_hex})");
+      $conn->setState(new VersionState($conn));
     }
     else {
-      $conn->setState(new HaltState($conn));
-      
       $this->logger->error("Invalid HELLO mark (0x{$hello_mark_hex})");
+      $conn->setState(new HaltState($conn));
     }
   }
 }
