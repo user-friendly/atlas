@@ -22,4 +22,4 @@ A PHP application for parallel work execution.
 * ~Using UNIX sockets for IPC?~ - Yes! And we get net sockets too.
 * Symfony's Serializer might help with the actual message body.
 * Byte operations might be tricky. Be careful.
-* Should the socket implementation not be using stream sockets, but just the low socket functions?
+* Streams vs Sockets extension?
