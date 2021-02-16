@@ -10,8 +10,6 @@ use Ants\Network\Connection;
 
 /**
  * ReceiveState class.
- * 
- * Implements a TLV type of message handling.
  */
 class ReceiveState extends BaseState {
   
