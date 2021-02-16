@@ -10,7 +10,15 @@ namespace Ants;
  * Utility class.
  */
 class Utility {
+  
+  /**
+   * KB constant.
+   * 
+   * @var integer
+   */
   const KILOBYTE = 1024;
+  
+  static protected $printFormatBinary = '%0' . (PHP_INT_SIZE * 8) . 'b';
   
   /**
    * Generates a string representation for the given byte count.
@@ -34,6 +42,21 @@ class Utility {
       }
     }
     return "{$rounded_size} {$unit}";
+  }
+  
+  /**
+   * Verbose integer binary printer.
+   * 
+   * @param int $binary
+   * @return string
+   */
+  public static function formatBinary(int $binary) {
+    $str = '';
+    foreach (\array_chunk(\str_split(\sprintf(static::$printFormatBinary, $binary), 4), 2) as $index => $pair) {
+      $offset = PHP_INT_SIZE - $index;
+      $str .= "{$offset}:[{$pair[0]} {$pair[1]}] ";
+    }
+    return \rtrim($str);
   }
   
   /**

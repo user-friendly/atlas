@@ -19,8 +19,6 @@ use Ants\Network\State\HelloState;
  */
 class Connection {
   use LoggerTrait;
-  
-  const MARK_BYE   = 0x0004;
 
   /**
    * Stream resource.
@@ -143,55 +141,6 @@ class Connection {
     $this->state->handle($this);
     
     return $this;
-    
-    switch ($this->state) {
-      case 0:
-        $this->append(\pack('n', static::MARK_HELLO));
-        $this->state = 1;
-        
-        $this->logger->debug("Hello mark sent");
-        break;
-      case 1:
-        // FIXME Magic number.
-        $binary = $this->consume(2);
-        if ($binary !== FALSE) {
-          $hello_mark_hex = \bin2hex($binary);
-          if (static::MARK_HELLO === ((int) @unpack("nSINT", $binary)['SINT'])) {
-            // Received Hello from remote end.
-            $this->state = 2;
-            
-            $this->logger->debug("Hello mark received (0x{$hello_mark_hex})");
-          }
-          else {
-            $this->logger->error("invalid HELLO mark (0x{$hello_mark_hex}), disconnecting");
-            $this->fclose();
-          }
-        }
-        break;
-      case 2:
-        // ...guess state 2 is just this message.
-        $this->logger->debug("handshake successful");
-        $this->state = 3;
-        break;
-      case 3:
-        // TODO What now?
-        $this->append(\pack('n', static::MARK_BYE));
-        $this->state = 4;
-        break;
-      case 4:
-        // FIXME Magic number.
-        $binary = $this->peek(2);
-        if (static::MARK_BYE === ((int) @unpack("nSINT", $binary)['SINT'])) {
-          $bye_mark_hex = \bin2hex($binary);
-          $this->logger->debug("Bye mark received (0x{$bye_mark_hex})");
-          $this->close();
-        }
-        break;
-      default:
-        $this->fclose();
-        throw new \RuntimeException("Unhandled connection state.");
-        break;
-    }
   }
   
   /**

@@ -15,8 +15,27 @@ use Ants\Network\Connection;
  */
 class ReceiveState extends BaseState {
   
+  /**
+   * Substate indicator for the header.
+   * 
+   * A message starts with a header - tag & length. This substate indicates that
+   * the current receive state is reading the tag and length. 
+   * 
+   * @var integer
+   */
   const SUBSTATE_HEADER = 1;
+  
+  /**
+   * Substate indicator for the value.
+   * 
+   * This substate indicates the receive state is reading the message's body.
+   * 
+   * @var integer
+   */
   const SUBSTATE_VALUE = 2;
+  
+  // NOTE May not be needed.
+  // const MARK_BYE   = 0x0004;
   
   /**
    * Substate state.
