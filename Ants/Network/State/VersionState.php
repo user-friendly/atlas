@@ -54,7 +54,7 @@ class VersionState extends BaseState {
   public function handle(Connection $conn) : void {
     // The lenght of the packed version should always be the same, no matter
     // what values are the components.
-    $binary = $conn->consume(\strlen($this->packedVersion));
+    $binary = $conn->consumeExact(\strlen($this->packedVersion));
     if (!$binary) {
       return;
     }

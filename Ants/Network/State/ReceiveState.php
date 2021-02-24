@@ -7,6 +7,8 @@
 namespace Ants\Network\State;
 
 use Ants\Network\Connection;
+use Ants\Network\Message;
+use Ants\PDO\Dummy;
 
 /**
  * ReceiveState class.
@@ -14,38 +16,22 @@ use Ants\Network\Connection;
 class ReceiveState extends BaseState {
   
   /**
-   * Substate indicator for the header.
+   * Message to receive.
    * 
-   * A message starts with a header - tag & length. This substate indicates that
-   * the current receive state is reading the tag and length. 
-   * 
-   * @var integer
+   * @var \Ants\Network\Message
    */
-  const SUBSTATE_HEADER = 1;
+  protected $recvMessage;
   
   /**
-   * Substate indicator for the value.
-   * 
-   * This substate indicates the receive state is reading the message's body.
-   * 
-   * @var integer
+   * Message to send.
+   *
+   * @var \Ants\Network\Message
    */
-  const SUBSTATE_VALUE = 2;
+  protected $sendMessage;
   
-  // NOTE May not be needed.
-  // const MARK_BYE   = 0x0004;
-  
-  /**
-   * Substate state.
-   * 
-   * @var int
-   */
-  protected $substate;
-  
-  protected $tagSize = 2;
-  protected $lengthSize = 2;
-  // NOTE Figure out communications between 32/64 bit platforms.
-  protected $maxValue = PHP_INT_MAX;
+  // TODO Test props.
+  protected $testWaitTime = 1;
+  protected $testTimer = 0;
   
   /**
    * {@inheritDoc}
@@ -55,14 +41,12 @@ class ReceiveState extends BaseState {
   public function __construct(Connection $conn) {
     parent::__construct($conn);
     
-    // After the version binary comes the first message's header.
-    $this->substate = static::SUBSTATE_HEADER;
-    
+    $this->testWaitTime = \mt_rand(1, 2);
     $this->testTimer = \time();
+    
+    $this->sendMessage = Message::create(new Dummy());
+    $this->recvMessage = Message::createEmpty();
   }
-
-  protected $stayTime = 3;
-  protected $testTimer = 0;
   
   /**
    * {@inheritDoc}
@@ -70,10 +54,26 @@ class ReceiveState extends BaseState {
    * @see \Ants\Network\State\StateInterface::handle()
    */
   public function handle(Connection $conn) : void {
-    if (\time() - $this->testTimer > $this->stayTime) {
-      $this->logger->debug("Ooookey, nothing to do. Bye!");
-      $conn->setState(new HaltState($conn));
+    if ($this->sendMessage/*  && \time() - $this->testTimer > $this->testWaitTime */) {
+      // Send the test message created at ctor() time.
+      $conn->append($this->sendMessage->raw());
+      // End test.
+      // $conn->setState(new HaltState($conn));
+      // Make sure this substate is not reached again.
+      $this->sendMessage = NULL;
+    }
+    if (!$this->recvMessage->isComplete()) {
+      $this->recvMessage->feedRaw($conn->consume());
+      if ($this->recvMessage->isComplete()) {
+        $this->logger->debug("Received test message: ");
+        // var_dump
+        ob_start();
+        var_dump($this->recvMessage->getValue());
+        $var_dump = ob_get_clean();
+        $this->logger->debug("{$var_dump}");
+        
+        $conn->setState(new HaltState($conn));
+      }
     }
   }
-
 }

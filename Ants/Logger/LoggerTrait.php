@@ -24,7 +24,7 @@ trait LoggerTrait {
    * @return \Monolog\Logger
    */
   public static function getLogger(string $channel = NULL) : \Monolog\Logger {
-    $channel = $channel ?? Utility::get_class_name(__CLASS__);
+    $channel = $channel ?? Utility::get_class_name(static::class);
     return LoggerFactory::getLogger($channel);
   }
 }

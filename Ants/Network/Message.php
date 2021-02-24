@@ -13,6 +13,7 @@ class Message {
   // TODO Poor man's state handling is happening in the interpretRaw() method.
   //      Consider moving this whole class as a set of states, in the
   //      \Ants\Network\State namespace.
+  // TODO A lot of exeptions look like assertions? What you gonna do about it?
   
   /**
    * Empty tag.
@@ -75,25 +76,33 @@ class Message {
     $message->buffer = @\serialize($message->value);
     $message->size = \strlen($message->buffer);
     $message->header = \pack($message->headerPackFormat, $message->tag, $message->size);
+    return $message;
   }
   
   public static function createEmpty() {
     return new Message();
   }
   
-  public function feedRaw(string $binary) : bool {
+  public function feedRaw(string $binary) : void {
     $this->buffer .= $binary;
     $this->interpretRaw();
   }
   
   // Gets the raw message. Used for sending messages.
   public function raw() : string {
-    throw new \Exception("TODO Implement method.");
+    if (\strlen($this->buffer) !== $this->size) {
+      $actual_sz = \strlen($this->buffer);
+      throw new \RuntimeException("Raw buffer size is {$actual_sz}. Expected size is {$this->size}.");
+    }
+    if (!$this->header) {
+      throw new \RuntimeException("No header set.");
+    }
+    return $this->header . $this->buffer;
   }
   
   // Whether the message has been fully interpreted.
   public function isComplete() : bool {
-    return FALSE;
+    return $this->complete;
   }
   
   /**

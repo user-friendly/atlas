@@ -7,6 +7,8 @@
 // FIXME Inconsistent error handling - are you gonna throw exceptions or return
 //       FALSE?!
 
+// TODO Document the magic getters and setters.
+
 namespace Ants\Network;
 
 use Monolog\Logger;
@@ -20,6 +22,8 @@ use Ants\Network\State\HelloState;
 class Connection {
   use LoggerTrait;
 
+  const KILO_BYTE = 1024;
+  
   /**
    * Stream resource.
    * 
@@ -76,13 +80,20 @@ class Connection {
    * @param resource $stream
    *   A stream resource, ready for I/O.
    */
-  public function __construct($stream, $blockMode = TRUE, $timeout = 60, $readSize = 1500, $writeSize = 1500) {
+  public function __construct($stream, $blockMode = TRUE, $timeout = 60, $readSize = NULL, $writeSize = NULL) {
     $this->logger = static::getLogger();
     
     if (!is_resource($stream)) {
       throw new \RuntimeException("Connection needs a valid stream resource.");
     }
     $this->stream = $stream;
+    
+    if ($readSize === NULL) {
+      $readSize = static::KILO_BYTE;
+    }
+    if ($writeSize === NULL) {
+      $writeSize = static::KILO_BYTE;
+    }
     
     // Setup stream properties.
     $this->setBlockMode($blockMode);
@@ -108,6 +119,7 @@ class Connection {
   public function close(bool $flush = FALSE) : bool {
     if ($flush) {
       // Attempt to flush the write buffer.
+      // FIXME Potential infinite loop.
       while ($this->writeBuffer) {
         $this->send();
       }
@@ -119,6 +131,10 @@ class Connection {
    * Receive data.
    */
   public function receive() : self {
+    if (!$this->isValid()) {
+      return $this;
+    }
+    
     $read_buff = $this->readSome($this->readSize);
     
     if (\strlen($read_buff)) {
@@ -147,6 +163,10 @@ class Connection {
    * Sends data to the receiver.
    */
   public function send() : self {
+    if (!$this->isValid()) {
+      return $this;
+    }
+    
     if (\strlen($this->writeBuffer) > 0) {
       // Peek the packet to be sent.
       $binary = \substr($this->writeBuffer, 0, $this->writeSize);
@@ -204,13 +224,38 @@ class Connection {
   }
   
   /**
-   * Consumes exactly $size bytes from the read buffer.
-   * 
+   * Consumes up to $size bytes from the read buffer.
+   *
    * @param int $size
+   *   Optional. Byte read limit.
+   *
    * @return string|boolean
-   *   Returns the binary string or FALSE if buffer was less than $size.
+   *   Returns a binary string or FALSE if buffer was less than $size.
+   *
    */
-  public function consume(int $size) {
+  public function consume(int $size = 0) {
+    $size = $size ? $size : $this->readSize;
+    if (\strlen($this->readBuffer)) {
+      $binary = \substr($this->readBuffer, 0, $size);
+      $this->readBuffer = \substr($this->readBuffer, \strlen($binary));
+      return $binary;
+    }
+    return FALSE;
+  }
+  
+  /**
+   * Consumes exactly $size bytes from the read buffer.
+   *
+   * @param int $size
+   *   Number of bytes to read (exactly).
+   *
+   * @return string|boolean
+   *   Returns a binary string of size $size or FALSE if buffer was less than
+   *   $size.
+   *
+   */
+  public function consumeExact(int $size = 0) {
+    $size = $size ? $size : $this->readSize;
     if (\strlen($this->readBuffer) >= $size) {
       $binary = \substr($this->readBuffer, 0, $size);
       $this->readBuffer = \substr($this->readBuffer, $size);
@@ -222,7 +267,7 @@ class Connection {
   /**
    * Peek exactly $size bytes from the read buffer.
    * 
-   * Unlike \Ants\Network\Connection::consume(), the read buffer is not altered.
+   * Unlike ::consume() & ::consumeExact(), the read buffer is not altered.
    * 
    * @param int $size
    * @return string|boolean

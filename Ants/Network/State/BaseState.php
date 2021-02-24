@@ -38,4 +38,3 @@ abstract class BaseState implements StateInterface {
     $this->logger->debug("State changed to {$state_name}");
   }
 }
-

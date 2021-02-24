@@ -83,30 +83,37 @@ class Main {
       }
     }
     
+    // Child processes path.
     if ($this->mainProcess->isChild) {
       try {
         $ret = (new Network\Client($this))->run();
       }
       catch (\RuntimeException $e) {
         $this->logger->error($e->getMessage());
-        exit(Main::EXIT_FAILURE);
+        return Main::EXIT_FAILURE;
       }
     }
+    // Main process path.
     else {
       while (count($this->subProcess)) {
-        $status = NULL;
-        $pid = \pcntl_wait($status);
+        $pcntl_status = NULL;
+        $pid = \pcntl_wait($pcntl_status);
         if ($pid > 0) {
           if (isset($this->subProcess[$pid])) {
             unset($this->subProcess[$pid]);
             
-            // TODO Figure out why the above exit() with non-zero is not
-            //      captured by the following block.
-            if (\pcntl_wifexited($status)) {
-              $this->logger->debug("child process $pid is done, with status $status");
+            if (\pcntl_wifexited($pcntl_status)) {
+              // Actual status.
+              $status = pcntl_wexitstatus($pcntl_status);
+              if ($status === 0) {
+                $this->logger->debug("child process $pid is done, with status $status");
+              }
+              else {
+                $this->logger->error("child process $pid failed, with status $status");
+              }
             }
             else {
-              $this->logger->error("child process $pid failed, with status $status");
+              $this->logger->error("child process $pid failed, did not exit normally, PCNTL status $pcntl_status");
             }
           }
           else {
@@ -114,8 +121,8 @@ class Main {
           }
         }
         else {
-          //$this->mainProcess->yield();
-          $this->mainProcess->sleep(2);
+          $this->mainProcess->yield();
+          //$this->mainProcess->sleep(2);
         }
       }
       

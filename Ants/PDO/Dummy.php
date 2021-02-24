@@ -17,7 +17,6 @@ class Dummy
 
   public function __construct() {
     $this->id = \mt_rand(0, 9999999);
-    
     $this->data['text'] = 'TODO Generate some \n\n random text';
     $this->data['number'] = \mt_rand(-999999, 999999);
   }
@@ -57,24 +56,3 @@ class Dummy
     return $payload;
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

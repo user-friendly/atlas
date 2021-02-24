@@ -4,6 +4,8 @@ A PHP application for parallel work execution.
 
 # TODO
 
+* IMPORTANT: Connections need to flush their output buffer before closing.
+    * What does that mean for I/O on the opposite end, if a close is required there too?
 * What will this application do exactly? Something like serverless, but... Decentralized?
     * A network of nodes (graph).
     * Each node can accept work and delegate some to nearby/other nodes.

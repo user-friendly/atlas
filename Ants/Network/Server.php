@@ -126,6 +126,7 @@ class Server {
     }
   }
   
+  // TODO Can be abstracted away, for Server & Client.
   protected function handleConnections() {
     foreach ($this->connections as $connection) {
       $connection->receive();

@@ -44,7 +44,7 @@ class HelloState extends BaseState {
    * @see \Ants\Network\State\StateInterface::handle()
    */
   public function handle(Connection $conn) : void {
-    $binary = $conn->consume(\strlen($this->markHello));
+    $binary = $conn->consumeExact(\strlen($this->markHello));
     if (!$binary) {
       return;
     }

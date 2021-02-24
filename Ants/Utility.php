@@ -80,4 +80,3 @@ class Utility {
     return $thing;
   }
 }
-

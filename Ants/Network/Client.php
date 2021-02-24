@@ -48,8 +48,8 @@ class Client {
   protected $retries = 8;
   
   protected $stats = [
-    'bytes_read' => 0,
-    'bytes_written' => 0,
+    "bytes_read" => 0,
+    "bytes_written" => 0,
   ];
   
   public function __construct(\Ants\Main $main) {
@@ -57,7 +57,7 @@ class Client {
     $this->main = $main;
     
     // The socket path should always be absolute.
-    $this->socketPath = \getcwd() . '/php-daemon.sock';
+    $this->socketPath = \getcwd() . "/php-daemon.sock";
     $this->socketUrl = "unix://{$this->socketPath}";
     //$this->socketUrl = 'tcp://0.0.0.0:9999';
     
