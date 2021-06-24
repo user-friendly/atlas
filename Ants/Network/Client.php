@@ -90,6 +90,7 @@ class Client {
   protected function connect() : void {
     $this->logger->debug("connect to {$this->socketUrl}");
     
+    // TODO Why is the following block not part of the Connection class?
     $socket = NULL;
     for ($retries = 0; $retries < $this->retries; $retries++) {
       $errno = 0;

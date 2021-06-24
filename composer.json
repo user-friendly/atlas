@@ -19,6 +19,9 @@
         "monolog/monolog": "^2.2"
     },
     "autoload": {
-        "psr-4": {"Ants\\": "Ants/"}
+        "psr-4": {
+            "Ants\\": "Ants/",
+            "Ants\\tests\\": "tests/"
+        }
     }
 }

@@ -4,7 +4,7 @@
  * LoggerTest file.
  */
 
-$this->logger->emergency("this is a test EMERGENCY", ["asdfdsf"]);
+$this->logger->emergency("this is a test EMERGENCY", ["test"]);
 $this->logger->critical("this is a test CRITICAL");
 $this->logger->alert("this is a test ALERT");
 $this->logger->error("this is a test ERROR");

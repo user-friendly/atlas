@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Hammer the memory test.
+ * Memory stress test.
  */
 
 define('DEBUG', TRUE);

@@ -8,7 +8,6 @@ namespace Ants\Network;
 
 use Ants\Main;
 use Ants\Logger\LoggerTrait;
-use Ants\PDO\Dummy;
 
 class Server {
   use LoggerTrait;
@@ -117,6 +116,8 @@ class Server {
   }
   
   protected function accept() : void {
+    // TODO Should this method be part of the Connection class?
+    //      As a static method - ::accpetConnection()
     if ($new_stream = @\stream_socket_accept($this->socket, 0)) {
       if (DEBUG) {
         $this->stats['client_connections']++;
@@ -172,6 +173,9 @@ class Server {
   }
   
   protected function listen() : void {
+    // TODO Should this method not part of the Connection class?
+    //      Static method or not?
+    
     // Old trick cowboys use.
     if (\file_exists($this->socketPath)  && !\unlink($this->socketPath)) {
       throw new \RuntimeException("Failed to bind - could not remove existing socket $this->socketPath.");

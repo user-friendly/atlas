@@ -47,14 +47,6 @@ class Main {
   
   // Starts the daemon.
   public function run() : int {
-    global $argv, $argc;
-    
-    if ($argc > 1 && $argv[1] == 'swarm-test') {
-      return $this->clientTest(
-        isset($argv[2]) && \is_numeric($argv[2]) ? (int) $argv[2] : NULL
-        );
-    }
-    
     $this->logger->debug("start server.");
     
     $server = new Network\Server($this);

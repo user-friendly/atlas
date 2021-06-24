@@ -56,6 +56,10 @@ class Process {
     return NULL;
   }
   
+  public function __toString() : string {
+    return "{process#{$this->pid}}";
+  }
+  
   /**
    * Termination signals.
    *
@@ -127,7 +131,7 @@ class Process {
     return $child_pid;
   }
   
-  // TODO Misleading name.
+  // FIXME Misleading name.
   /**
    * Safe fork.
    * 
