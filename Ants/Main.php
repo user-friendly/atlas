@@ -14,6 +14,15 @@ if (!defined("DEBUG")) {
 use Ants\Logger\LoggerFactory;
 use Ants\Logger\LoggerTrait;
 
+/**
+ * Application's main class.
+ * 
+ * FIXME The run() is starting a deamon, but this class in not responsible for the server.
+ *       What is this class supposed to do?
+ *       Is it suppposed to be the entry point for the app, providing basic info,
+ *       starting the deamon, starting a client, or even another app?
+ *       Should definitely keep the version.
+ */
 class Main {
   use LoggerTrait;
   
