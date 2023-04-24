@@ -187,14 +187,13 @@ class Server {
       STREAM_SERVER_BIND | STREAM_SERVER_LISTEN
     );
     
-    if (DEBUG) {
-      Connection::debugStreamInfo($this->socket, $this->logger);
-    }
-    
     if (!$this->socket ) {
       throw new \RuntimeException("Failed to create $this->socketPath, error: $errstr ($errno).");
     }
     else {
+      if (DEBUG) {
+        Connection::debugStreamInfo($this->socket, $this->logger);
+      }
       $this->logger->debug("Bound to socket: $this->socketUrl");
     }
   }
