@@ -1,4 +1,3 @@
-#!/usr/bin/env php
 <?php
 
 define('DEBUG', TRUE);
@@ -9,8 +8,9 @@ global $argv, $argc;
 if ($argc > 1) {
   $class = "Ants\\tests\\{$argv[1]}";
   $test = new $class();
-  $test->run();
+  return $test->run();
 }
 else {
   echo "No test to run.\n";
+  return 0;
 }
