@@ -74,6 +74,7 @@ class Process {
   
   const NANO_SECOND = 1000000000;
   static public function sleep(float $time) : void {
+    // TODO WTF? Comment your code.
     \time_nanosleep(
       (int) $time,
       (int) (($time - (int) $time) * self::NANO_SECOND)
@@ -85,6 +86,7 @@ class Process {
    */
   static public function yield() {
     // FIXME Magic number.
+    // FIXME Either make this a constant or calculate it once per runtime, and directly use \time_nanosleep().
     static::sleep(0.025);
   }
   
