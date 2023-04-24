@@ -91,6 +91,10 @@ class Client {
     $this->logger->debug("connect to {$this->socketUrl}");
     
     // TODO Why is the following block not part of the Connection class?
+    //      Older me: maybe because the collection class is lower level, only concerning itself with I/O?
+    //                Still, this could be a static/helper method as part of the connection.
+    //                The client may be responsible for the URL only, which it gets from a config store.
+    //                Yeah, the more I look at the `stream_socket_client()` call...
     $socket = NULL;
     for ($retries = 0; $retries < $this->retries; $retries++) {
       $errno = 0;
@@ -102,6 +106,7 @@ class Client {
       else {
         $this->logger->error("failed to connect to $this->socketUrl, error: $errstr ($errno).");
         $this->logger->debug("retry connection ($retries)...");
+        // FIXME A bunch of magic here.
         $this->main->getProcess()->sleep(\mt_rand(50, 500) / 1000);
       }
     }
