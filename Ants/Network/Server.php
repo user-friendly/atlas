@@ -84,9 +84,9 @@ class Server {
     $this->main = $main;
     
     // The socket path should always be absolute.
-    $this->socketPath = \getcwd() . '/php-daemon.sock';
-    $this->socketUrl = "unix://{$this->socketPath}";
-    //$this->socketUrl = 'tcp://0.0.0.0:9999';
+    //$this->socketPath = \getcwd() . '/php-daemon.sock';
+    //$this->socketUrl = "unix://{$this->socketPath}";
+    $this->socketUrl = 'tcp://0.0.0.0:9999';
     
     $this->connectionCleanupLast = \time();
     

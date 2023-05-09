@@ -14,7 +14,8 @@ namespace Ants\Network;
 use Monolog\Logger;
 use Ants\Logger\LoggerTrait;
 use Ants\Network\State\StateInterface;
-use Ants\Network\State\HelloState;
+use Ants\Network\State\EchoState;
+use Ants\Network\State\DebugState;
 
 /**
  * A stream connection class.
@@ -34,6 +35,8 @@ class Connection {
   protected $blockMode;
   
   protected $timeout;
+  
+  protected $remoteName;
   
   /**
    * Stream read size.
@@ -63,8 +66,13 @@ class Connection {
    */
   protected $writeBuffer = '';
   
+  /**
+   * A list of readonly protected variables.
+   * 
+   * @TODO This is not a good idea. Refactor.
+   */
   protected static $getters = [
-    "blockMode", "timeout", "readSize", "writeSize",
+    "blockMode", "timeout", "remoteName", "readSize", "writeSize",
   ];
   
   /**
@@ -100,8 +108,19 @@ class Connection {
     $this->setTimeout($timeout);
     $this->setReadSize($readSize);
     $this->setWriteSize($writeSize);
+
+    $this->remoteName = @stream_socket_get_name($this->stream, TRUE);
     
-    $this->state = new HelloState($this);
+    if (DEBUG) {
+      $this->logger->debug("Remote socket: " . $this->remoteName);
+    }
+    
+    $this->state = new EchoState($this);
+    
+    // Override if debugging is enabled.
+    if (DEBUG) {
+      $this->state = new DebugState($this);
+    }
   }
   
   /**
@@ -143,7 +162,7 @@ class Connection {
       if (DEBUG) {
         $sz = \strlen($read_buff);
         $hex = \bin2hex($read_buff);
-        $this->logger->debug("received {$sz} bytes: {$hex}");
+        $this->logger->debug("{$this->remoteName} received {$sz} bytes: {$hex}");
       }
     }
     return $this;
@@ -206,6 +225,9 @@ class Connection {
     if (in_array($name, static::$getters)) {
       return $this->$name;
     }
+    if (DEBUG && \strpos($name, '_debug', 0) === 0) {
+      return $this->{$name};
+    }
     return NULL;
   }
   
@@ -214,11 +236,17 @@ class Connection {
     if (method_exists($this, $method_name)) {
       $this->$method_name($value);
     }
+    if (DEBUG && \strpos($name, '_debug', 0) === 0) {
+      $this->{$name} = $value;
+    }
   }
   
   public function __isset(string $name) {
     if (in_array($name, static::$getters)) {
       return isset($this->$name);
+    }
+    if (DEBUG && \strpos($name, '_debug', 0) === 0) {
+      return isset($this->{$name});
     }
     return NULL;
   }
@@ -341,20 +369,14 @@ class Connection {
    * @see \fwrite()
    * @see Connection::fwrite()
    *
-   * @param string|array $binary
+   * @param string $binary
    *   Bytes to be written, as a string or as an array of bytes.
    * @throws \RuntimeException
    *   In case there's a mismatch between bytes to be written and bytes written.
    * @return int
    *   Number of bytes written.
    */
-  protected function sendSome($binary) : int {
-    if (is_array($binary)) {
-      $binary = \implode($binary);
-    }
-    else if (!is_string($binary)) {
-      throw new \RuntimeException("Binary bust be a string or an array of characters");
-    }
+  protected function sendSome(string $binary) : int {
     $bytes_written = $this->fwrite($binary);
     if (\strlen($binary) !== $bytes_written) {
       $error = \error_get_last();

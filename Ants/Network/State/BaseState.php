@@ -35,6 +35,6 @@ abstract class BaseState implements StateInterface {
     $this->connection = $conn;
     
     $state_name = Utility::get_class_name($this);
-    $this->logger->debug("State changed to {$state_name}");
+    $this->logger->debug("State changed to {$state_name} for {$conn->remoteName}");
   }
 }
