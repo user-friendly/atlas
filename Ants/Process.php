@@ -10,6 +10,9 @@ use Ants\Logger\LoggerTrait;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\GenericEvent;
 
+/**
+ * Manager class for the current process.
+ */
 class Process {
   use LoggerTrait;
   
@@ -36,6 +39,8 @@ class Process {
    * @var \Symfony\Component\EventDispatcher\EventDispatcher;
    */
   protected $signalDispatcher;
+  
+  protected $signalTermReceived = FALSE;
   
   // TODO This is silly.
   static protected $getters = [
@@ -203,7 +208,13 @@ class Process {
       // TODO Do not wait on child processes. Notify them instead of the manager
       //      process termination.
       //      Edit: signals seem to be passed to the child processes
-      exit(Main::EXIT_SUCCESS);
+      // FIXME This does not look good. What are the standard shutdown Unix procedures?
+      if ($this->signalTermReceived) {
+        exit(Main::EXIT_SUCCESS);
+      }
+      else {
+        $this->signalTermReceived = TRUE;
+      }
     }
     
     // All other signals handled here.

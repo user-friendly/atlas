@@ -79,6 +79,8 @@ class Server {
   // Not really used (not displayed, but populated?).
   protected $stat_total_bytes_sent = 0;
   
+  protected $run = true;
+  
   public function __construct(Main $main) {
     $this->logger = static::getLogger();
     $this->main = $main;
@@ -90,13 +92,13 @@ class Server {
     
     $this->connectionCleanupLast = \time();
     
-    $this->main->getProcess()->addSignalHandler([$this, "shutdown"]);
+    $this->main->getProcess()->addSignalHandler([$this, "signalShutdown"]);
   }
   
   public function run() : int {
     $this->listen();
     
-    while (TRUE) {
+    while ($this->run) {
       
       $this->accept();
       
@@ -109,6 +111,8 @@ class Server {
         $this->main->getProcess()->yield();
       }
     }
+    
+    $this->logger->debug("Main server loop done.");
     
     $this->shutdown();
     
@@ -196,6 +200,10 @@ class Server {
       }
       $this->logger->debug("Bound to socket: $this->socketUrl");
     }
+  }
+  
+  public function signalShutdown() : void {
+      $this->run = false;
   }
   
   public function shutdown() : void {
