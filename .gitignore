@@ -1,2 +1,4 @@
+# Project specific.
 vendor/
 *.sock
+local.tin
