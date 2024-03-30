@@ -81,6 +81,8 @@ class Server {
   
   protected $run = true;
   
+  protected $users = [];
+  
   public function __construct(Main $main) {
     $this->logger = static::getLogger();
     $this->main = $main;
@@ -133,12 +135,21 @@ class Server {
   
   // TODO Can be abstracted away, for Server & Client.
   protected function handleConnections() {
+    $line = NULL;
+    $messages = [];
+    
     foreach ($this->connections as $connection) {
       $connection->receive();
+      
+      if ($line = $connection->consume()) {
+        $messages[] = "{$connection->remoteName}: $line";
+      }
     }
     
     foreach ($this->connections as $connection) {
-      $connection->process();
+      foreach ($messages as $message) {
+        $connection->append($message . "\n> ");
+      }
     }
     
     foreach ($this->connections as $connection) {

@@ -13,9 +13,6 @@ namespace Ants\Network;
 
 use Monolog\Logger;
 use Ants\Logger\LoggerTrait;
-use Ants\Network\State\StateInterface;
-use Ants\Network\State\EchoState;
-use Ants\Network\State\DebugState;
 
 /**
  * A stream connection class.
@@ -76,13 +73,6 @@ class Connection {
   ];
   
   /**
-   * Current state.
-   * 
-   * @var \Ants\Network\State\StateInterface
-   */
-  protected $state;
-  
-  /**
    * Connection constructor. 
    * 
    * @param resource $stream
@@ -113,13 +103,6 @@ class Connection {
     
     if (DEBUG) {
       $this->logger->debug("Remote socket: " . $this->remoteName);
-    }
-    
-    $this->state = new EchoState($this);
-    
-    // Override if debugging is enabled.
-    if (DEBUG) {
-      $this->state = new DebugState($this);
     }
   }
   
@@ -169,11 +152,11 @@ class Connection {
   }
   
   /**
-   * Process connection state.
+   * Process connection.
    */
   public function process() : self {
     
-    $this->state->handle($this);
+    
     
     return $this;
   }
@@ -195,16 +178,6 @@ class Connection {
       // allocation operation.
       $this->writeBuffer = \substr($this->writeBuffer, $this->writeSize);
     }
-    return $this;
-  }
-  
-  /**
-   * Sets the current state.
-   * 
-   * @param StateInterface $state
-   */
-  public function setState(StateInterface $state) : self {
-    $this->state = $state;
     return $this;
   }
   

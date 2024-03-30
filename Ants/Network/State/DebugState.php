@@ -28,7 +28,7 @@ class DebugState extends BaseState {
       $this->printHelp($conn);
   }
 
-/*
+  /*
    * {@inheritDoc}
    */
   public function handle(Connection $conn): void {
