@@ -1,0 +1,19 @@
+/*
+ * Main configuration file.
+ * 
+ * Try to keep the hierarchy the same as the class hierarchy.
+ */
+
+{
+	"network": {
+		"server": {
+			// "socketUrl": "unix://{getcwd()}/"
+			"socketUrl": 	"tcp://0.0.0.0:9999"
+		},
+		"client": {
+			// This is where the client connects.
+			// Should match with the server.
+			"socketUrl": 	"tcp://0.0.0.0:9999"
+		}
+	}
+}
