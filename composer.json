@@ -1,6 +1,6 @@
 {
-	"name" : "user-friendly/php-parallel",
-	"description" : "Experimentation with PHP parallel processing.",
+	"name" : "user-friendly/php-ants",
+	"description" : "A Multi-User Dungeon, in PHP. Crazy right?",
 	"type" : "project",
 	"license" : "proprietary",
 	"authors" : [{
