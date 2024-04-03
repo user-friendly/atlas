@@ -6,19 +6,10 @@
 
 namespace Ants\Network;
 
-use Ants\Game;
 use Ants\Logger\LoggerTrait;
-use Ants\Process;
 
 class Server {
   use LoggerTrait;
-  
-  /**
-   * The main process of the program.
-   * 
-   * @var \Ants\Process;
-   */
-  protected $process;
   
   /**
    * The server UNIX socket path.
@@ -86,9 +77,8 @@ class Server {
   
   protected $users = [];
   
-  public function __construct(Process $process) {
+  public function __construct() {
     $this->logger = static::getLogger();
-    $this->process = $process;
     
     // The socket path should always be absolute.
     //$this->socketPath = \getcwd() . '/php-daemon.sock';
@@ -97,31 +87,23 @@ class Server {
     
     $this->connectionCleanupLast = \time();
     
-    $this->process->addSignalHandler([$this, "signalShutdown"]);
+    $this->listen();
   }
   
-  public function run() : int {
-    $this->listen();
+  /**
+   * Runs network server loop.
+   * 
+   * @return bool
+   *   Returns TRUE if there are connections. FALSE, if there a no connections.
+   */
+  public function run() : bool {
+    $this->accept();
     
-    while ($this->run) {
-      
-      $this->accept();
-      
-      $this->handleConnections();
-      
-      $this->cleanup();
-      
-      // Yield CPU time only when there's nothing to do. 
-      if (empty($this->connections)) {
-        $this->process->yield();
-      }
-    }
+    $this->handleConnections();
     
-    $this->logger->debug("Main server loop done.");
+    $this->cleanup();
     
-    $this->shutdown();
-    
-    return Game::EXIT_SUCCESS;
+    return !empty($this->connections);
   }
   
   protected function accept() : void {
@@ -216,22 +198,18 @@ class Server {
     }
   }
   
-  public function signalShutdown() : void {
-      $this->run = false;
-  }
-  
   public function shutdown() : void {
     // TODO Do we need to do that for a Unix socket?
     if (!\stream_socket_shutdown($this->socket, STREAM_SHUT_RD)) {
-      $this->logger->error("failed to shutdown socket.");
+      $this->logger->error("Failed to shutdown socket.");
     }
     
     if (!\fclose($this->socket)) {
-      $this->logger->error("failed to close socket.");
+      $this->logger->error("Failed to close socket.");
     }
     
-    $this->logger->debug("total client connections: {$this->stats['client_connections']}");
+    $this->logger->debug("Client connections for this run: {$this->stats['client_connections']} ");
     
-    $this->logger->debug("shutdown.");
+    $this->logger->debug("Graceful shutdown.");
   }
 }

@@ -33,32 +33,43 @@ class Game {
   protected $process;
   
   /**
-   * An array of sub processes.
+   * Is the game running?
    * 
-   * Must remain empty for child processes.
-   * 
-   * @see \Ants\Process
-   * 
-   * @var array
+   * @var boolean
    */
-  protected $subProcess = [];
+  protected $run = true;
   
   public function __construct() {
     LoggerFactory::init();
     $this->logger = static::getLogger();
     
     $this->process = new Process();
+    $this->process->addSignalHandler([$this, "signalShutdown"]);
   }
   
   // Starts the daemon.
   public function run() : int {
-    $this->logger->debug("start server.");
+    $this->logger->debug("Start game.");
     
+    // Initialize & start listening for connections.
     $server = new Network\Server($this->process);
     
-    $ret = $server->run();
+    while ($this->run) {
+      // Process network messages.
+      if (!$server->run()) {
+        // No active connections? Give some cpu time back.
+        $this->process->yield();
+      }
+    }
+    
+    // Graceful shutdown.
+    $server->shutdown();
 
-    $this->logger->debug("done with server.");
-    return $ret;
+    $this->logger->debug("Graceful shutdown.");
+    return $this::EXIT_SUCCESS;
+  }
+  
+  public function signalShutdown() : void {
+    $this->run = false;
   }
 }
