@@ -1,21 +1,27 @@
 <?php
 /**
  * @file
- * Client class file.
+ * A simple client.
  */
 
 namespace Ants\Network;
 
 use Ants\Game;
+use Ants\Process;
 use Ants\Logger\LoggerTrait;
 
+/**
+ * Client class.
+ * 
+ * Probably going to use it for testing only.
+ */
 class Client {
   use LoggerTrait;
   
   /**
    * @var \Ants\Game;
    */
-  protected $mainProcess;
+  protected $process;
   
   // The socket path should always be absolute.
   protected $socketPath;
@@ -52,16 +58,16 @@ class Client {
     "bytes_written" => 0,
   ];
   
-  public function __construct(\Ants\Game $game) {
+  public function __construct(Process $process) {
     $this->logger = static::getLogger();
-    $this->mainProcess = $game;
+    $this->process = $process;
     
     // The socket path should always be absolute.
     //$this->socketPath = \getcwd() . "/php-daemon.sock";
     //$this->socketUrl = "unix://{$this->socketPath}";
     $this->socketUrl = 'tcp://0.0.0.0:9999';
     
-    $this->mainProcess->getProcess()->addSignalHandler([$this, "shutdown"]);
+    $this->process->addSignalHandler([$this, "shutdown"]);
   }
   
   public function run() : int {
@@ -107,7 +113,7 @@ class Client {
         $this->logger->error("failed to connect to $this->socketUrl, error: $errstr ($errno).");
         $this->logger->debug("retry connection ($retries)...");
         // FIXME A bunch of magic here.
-        $this->mainProcess->getProcess()->sleep(\mt_rand(50, 500) / 1000);
+        $this->process->sleep(\mt_rand(50, 500) / 1000);
       }
     }
     if (!$socket) {

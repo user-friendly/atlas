@@ -8,14 +8,17 @@ namespace Ants\Network;
 
 use Ants\Game;
 use Ants\Logger\LoggerTrait;
+use Ants\Process;
 
 class Server {
   use LoggerTrait;
   
   /**
-   * @var \Ants\Main;
+   * The main process of the program.
+   * 
+   * @var \Ants\Process;
    */
-  protected $main;
+  protected $process;
   
   /**
    * The server UNIX socket path.
@@ -83,9 +86,9 @@ class Server {
   
   protected $users = [];
   
-  public function __construct(Game $main) {
+  public function __construct(Process $process) {
     $this->logger = static::getLogger();
-    $this->main = $main;
+    $this->process = $process;
     
     // The socket path should always be absolute.
     //$this->socketPath = \getcwd() . '/php-daemon.sock';
@@ -94,7 +97,7 @@ class Server {
     
     $this->connectionCleanupLast = \time();
     
-    $this->main->getProcess()->addSignalHandler([$this, "signalShutdown"]);
+    $this->process->addSignalHandler([$this, "signalShutdown"]);
   }
   
   public function run() : int {
@@ -110,7 +113,7 @@ class Server {
       
       // Yield CPU time only when there's nothing to do. 
       if (empty($this->connections)) {
-        $this->main->getProcess()->yield();
+        $this->process->yield();
       }
     }
     

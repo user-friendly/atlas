@@ -30,7 +30,7 @@ class Game {
   /**
    * @var \Ants\Process
    */
-  protected $mainProcess;
+  protected $process;
   
   /**
    * An array of sub processes.
@@ -47,23 +47,18 @@ class Game {
     LoggerFactory::init();
     $this->logger = static::getLogger();
     
-    $this->mainProcess = new Process();
+    $this->process = new Process();
   }
   
   // Starts the daemon.
   public function run() : int {
     $this->logger->debug("start server.");
     
-    $server = new Network\Server($this);
+    $server = new Network\Server($this->process);
     
     $ret = $server->run();
 
     $this->logger->debug("done with server.");
     return $ret;
   }
-  
-  public function getProcess() : Process {
-    return $this->mainProcess;
-  }
 }
-
