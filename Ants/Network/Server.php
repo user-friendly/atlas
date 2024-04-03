@@ -6,7 +6,7 @@
 
 namespace Ants\Network;
 
-use Ants\Main;
+use Ants\Game;
 use Ants\Logger\LoggerTrait;
 
 class Server {
@@ -83,7 +83,7 @@ class Server {
   
   protected $users = [];
   
-  public function __construct(Main $main) {
+  public function __construct(Game $main) {
     $this->logger = static::getLogger();
     $this->main = $main;
     
@@ -118,7 +118,7 @@ class Server {
     
     $this->shutdown();
     
-    return Main::EXIT_SUCCESS;
+    return Game::EXIT_SUCCESS;
   }
   
   protected function accept() : void {

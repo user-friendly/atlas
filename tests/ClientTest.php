@@ -9,7 +9,7 @@ namespace Ants\tests;
 use Ants\Logger\LoggerFactory;
 use Ants\Logger\LoggerTrait;
 use Ants\Network\Client;
-use Ants\Main;
+use Ants\Game;
 
 class ClientTest implements Test {
   use LoggerTrait;
@@ -20,14 +20,14 @@ class ClientTest implements Test {
   }
   
   public function run(): int {
-    $main = new Main();
+    $main = new Game();
     
     try {
       return (new Client($main))->run();
     }
     catch (\RuntimeException $e) {
       $this->logger->error($e->getMessage());
-      return Main::EXIT_FAILURE;
+      return Game::EXIT_FAILURE;
     }
   }
 }

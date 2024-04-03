@@ -6,7 +6,7 @@
 
 namespace Ants\tests;
 
-use Ants\Main;
+use Ants\Game;
 use Ants\Process;
 use Ants\Logger\LoggerFactory;
 use Ants\Logger\LoggerTrait;
@@ -40,7 +40,7 @@ class SwarmTest implements Test {
     $this->logger = static::getLogger();
     
     $this->process = new Process();
-    $this->main = new Main();
+    $this->main = new Game();
   }
   
   public function run() : int {
@@ -59,7 +59,7 @@ class SwarmTest implements Test {
       $this->waitSubProcess();
     }
     
-    return Main::EXIT_SUCCESS;
+    return Game::EXIT_SUCCESS;
   }
   
   protected function spawnClients() {
@@ -84,7 +84,7 @@ class SwarmTest implements Test {
       }
       catch (\RuntimeException $e) {
         $this->logger->error($e->getMessage());
-        return Main::EXIT_FAILURE;
+        return Game::EXIT_FAILURE;
       }
     }
   }

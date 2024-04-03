@@ -161,7 +161,7 @@ class Process {
     
     $this->logger->debug("Process {$this->pid}(parent {$this->ppid}) is done.");
     
-    return Main::EXIT_SUCCESS;
+    return Game::EXIT_SUCCESS;
   }
   
   public function addSignalHandler($handler) {
@@ -210,7 +210,7 @@ class Process {
       //      Edit: signals seem to be passed to the child processes
       // FIXME This does not look good. What are the standard shutdown Unix procedures?
       if ($this->signalTermReceived) {
-        exit(Main::EXIT_SUCCESS);
+        exit(Game::EXIT_SUCCESS);
       }
       else {
         $this->signalTermReceived = TRUE;

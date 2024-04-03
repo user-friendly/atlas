@@ -7,7 +7,7 @@
 namespace Ants\Network\State;
 
 use Ants\Network\Connection;
-use Ants\Main;
+use Ants\Game;
 
 /**
  * VersionState class.
@@ -39,7 +39,7 @@ class VersionState extends BaseState {
   public function __construct(Connection $conn) {
     parent::__construct($conn);
     
-    list($this->major, $this->minor, $this->patch) = $this->unpackVersion(Main::VERSION);
+    list($this->major, $this->minor, $this->patch) = $this->unpackVersion(Game::VERSION);
     
     $this->packedVersion = \pack('n3', $this->major, $this->minor, $this->patch);
     // Immediately send the packed version to the other party.
@@ -71,7 +71,7 @@ class VersionState extends BaseState {
     // The unpacked array starts at index 1.
     list($remote_major, $remote_minor, $remote_patch) = \array_values($unpacked);
     $remote_version = "{$remote_major}.{$remote_minor}.{$remote_patch}";
-    $local_version = Main::VERSION;
+    $local_version = Game::VERSION;
     $this->logger->debug("Remote version is {$remote_version}, local version is {$local_version}.");
     // NOTE Makes sense only the major versions to match. Future application
     //      changes might put more restrictions on the other components. 

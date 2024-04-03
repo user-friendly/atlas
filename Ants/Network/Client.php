@@ -6,16 +6,16 @@
 
 namespace Ants\Network;
 
-use Ants\Main;
+use Ants\Game;
 use Ants\Logger\LoggerTrait;
 
 class Client {
   use LoggerTrait;
   
   /**
-   * @var \Ants\Main;
+   * @var \Ants\Game;
    */
-  protected $main;
+  protected $mainProcess;
   
   // The socket path should always be absolute.
   protected $socketPath;
@@ -52,16 +52,16 @@ class Client {
     "bytes_written" => 0,
   ];
   
-  public function __construct(\Ants\Main $main) {
+  public function __construct(\Ants\Game $game) {
     $this->logger = static::getLogger();
-    $this->main = $main;
+    $this->mainProcess = $game;
     
     // The socket path should always be absolute.
     //$this->socketPath = \getcwd() . "/php-daemon.sock";
     //$this->socketUrl = "unix://{$this->socketPath}";
     $this->socketUrl = 'tcp://0.0.0.0:9999';
     
-    $this->main->getProcess()->addSignalHandler([$this, "shutdown"]);
+    $this->mainProcess->getProcess()->addSignalHandler([$this, "shutdown"]);
   }
   
   public function run() : int {
@@ -75,7 +75,7 @@ class Client {
     
     $this->shutdown();
     
-    return Main::EXIT_SUCCESS;
+    return Game::EXIT_SUCCESS;
   }
   
   // TODO Can be abstracted away, for Server & Client.
@@ -107,7 +107,7 @@ class Client {
         $this->logger->error("failed to connect to $this->socketUrl, error: $errstr ($errno).");
         $this->logger->debug("retry connection ($retries)...");
         // FIXME A bunch of magic here.
-        $this->main->getProcess()->sleep(\mt_rand(50, 500) / 1000);
+        $this->mainProcess->getProcess()->sleep(\mt_rand(50, 500) / 1000);
       }
     }
     if (!$socket) {

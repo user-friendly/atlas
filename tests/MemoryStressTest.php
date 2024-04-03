@@ -6,7 +6,7 @@
 
 namespace Ants\tests;
 
-use Ants\Main;
+use Ants\Game;
 use Ants\Utility;
 use Ants\Logger\LoggerFactory;
 use Ants\Logger\LoggerTrait;
@@ -71,7 +71,7 @@ class MemoryStressTest implements Test {
         $this->logger->warning("Test done. Hit enter to continue.");
         readline();
         
-        return Main::EXIT_SUCCESS;
+        return Game::EXIT_SUCCESS;
     }
     
     protected function report_memory() : void {

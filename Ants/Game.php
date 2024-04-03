@@ -15,15 +15,11 @@ use Ants\Logger\LoggerFactory;
 use Ants\Logger\LoggerTrait;
 
 /**
- * Application's main class.
+ * Game class.
  * 
- * FIXME The run() is starting a deamon, but this class in not responsible for the server.
- *       What is this class supposed to do?
- *       Is it suppposed to be the entry point for the app, providing basic info,
- *       starting the deamon, starting a client, or even another app?
- *       Should definitely keep the version.
+ * This is equivalent to an application class.
  */
-class Main {
+class Game {
   use LoggerTrait;
   
   const VERSION = '1.0.0';
@@ -91,7 +87,7 @@ class Main {
       }
       catch (\RuntimeException $e) {
         $this->logger->error($e->getMessage());
-        return Main::EXIT_FAILURE;
+        return Game::EXIT_FAILURE;
       }
     }
     // Main process path.
@@ -128,7 +124,7 @@ class Main {
       }
       
       $this->logger->debug("done with client test.");
-      return Main::EXIT_SUCCESS;;
+      return Game::EXIT_SUCCESS;
     }
     
     return $ret;

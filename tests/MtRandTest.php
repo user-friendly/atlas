@@ -8,7 +8,7 @@ namespace Ants\tests;
 
 use Ants\Logger\LoggerFactory;
 use Ants\Logger\LoggerTrait;
-use Ants\Main;
+use Ants\Game;
 
 class MtRandTest implements Test {
   use LoggerTrait;
@@ -23,7 +23,7 @@ class MtRandTest implements Test {
       $this->runWithSeed($s);
     }
     
-    return Main::EXIT_SUCCESS;
+    return Game::EXIT_SUCCESS;
   }
   
   protected function runWithSeed($seed, $iterations = 3) {

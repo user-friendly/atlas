@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * Program entry point.
+ * User class.
  */
 
 namespace Ants;
