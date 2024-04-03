@@ -158,7 +158,7 @@ class Server {
   }
   
   /**
-   * Clenup invalid client connections.
+   * Cleanup invalid client connections.
    */
   protected function cleanup() : void {
     if (\time() - $this->connectionCleanupLast < $this->connectionCleanupTime) {

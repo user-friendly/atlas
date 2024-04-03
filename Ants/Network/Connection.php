@@ -4,7 +4,7 @@
  * Connection class file.
  */
 
-// FIXME Inconsistent error handling - are you gonna throw exceptions or return
+// FIXME Inconsistent error handling - are you going to throw exceptions or return
 //       FALSE?!
 
 // TODO Document the magic getters and setters.
