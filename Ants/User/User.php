@@ -4,7 +4,7 @@
  * User class.
  */
 
-namespace Ants;
+namespace Ants\User;
 
 use Ants\Logger\LoggerFactory;
 use Ants\Logger\LoggerTrait;
