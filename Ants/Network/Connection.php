@@ -102,6 +102,8 @@ class Connection {
     $this->remoteName = @stream_socket_get_name($this->stream, TRUE);
     
     if (DEBUG) {
+      $metadata = \stream_get_meta_data($this->stream);
+      xdebug_break();
       $this->logger->debug("Remote socket: " . $this->remoteName);
     }
   }

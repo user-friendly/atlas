@@ -75,8 +75,6 @@ class Server {
   
   protected $run = true;
   
-  protected $users = [];
-  
   public function __construct() {
     $this->logger = static::getLogger();
     
@@ -99,11 +97,22 @@ class Server {
   public function run() : bool {
     $this->accept();
     
-    $this->handleConnections();
+    // Move bytes between the OS network buffers and connection class buffers.
+    foreach ($this->connections as $key => $connection) {
+      $connection->receive()
+        ->send();
+    }
     
     $this->cleanup();
     
     return !empty($this->connections);
+  }
+  
+  // TODO Method name is no good.
+  public function getBuffers() {
+    foreach ($this->connections as $key => $connection) {
+      
+    }
   }
   
   protected function accept() : void {
@@ -113,32 +122,8 @@ class Server {
       if (DEBUG) {
         $this->stats['client_connections']++;
       }
-      $this->logger->debug("client connected to server");
+      $this->logger->debug("Client connected to server.");
       $this->connections[] = new Connection($new_stream, FALSE, $this->connectionTimeoutDefault);
-    }
-  }
-  
-  // TODO Can be abstracted away, for Server & Client.
-  protected function handleConnections() {
-    $line = NULL;
-    $messages = [];
-    
-    foreach ($this->connections as $connection) {
-      $connection->receive();
-      
-      if ($line = $connection->consume()) {
-        $messages[] = "{$connection->remoteName}: $line";
-      }
-    }
-    
-    foreach ($this->connections as $connection) {
-      foreach ($messages as $message) {
-        $connection->append($message . "\n> ");
-      }
-    }
-    
-    foreach ($this->connections as $connection) {
-      $connection->send();
     }
   }
   
@@ -150,9 +135,12 @@ class Server {
       return;
     }
     
-    foreach ($this->connections as &$connection) {
+    foreach ($this->connections as $key => &$connection) {
       if (!$connection->isValid()) {
         $connection = NULL;
+        if (DEBUG) {
+          $this->logger->debug("Remove connection: $key");
+        }
       }
     }
     
@@ -160,6 +148,7 @@ class Server {
       $old_count = count($this->connections);
     }
     
+    // Remove NULL elements from the list.
     $this->connections = array_filter($this->connections);
     $this->connectionCleanupLast = \time();
     
@@ -167,7 +156,7 @@ class Server {
       $new_count = count($this->connections);
       $diff = $old_count - $new_count;
       if ($diff) {
-        $this->logger->debug("clients cleaned up $diff");
+        $this->logger->debug("Clients cleaned up $diff");
       }
     }
   }
