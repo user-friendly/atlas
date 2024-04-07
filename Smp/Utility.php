@@ -4,7 +4,7 @@
  * Utility class file.
  */
 
-namespace Ants;
+namespace Smp;
 
 /**
  * Utility class.

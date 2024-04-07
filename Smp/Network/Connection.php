@@ -9,10 +9,10 @@
 
 // TODO Document the magic getters and setters.
 
-namespace Ants\Network;
+namespace Smp\Network;
 
 use Monolog\Logger;
-use Ants\Logger\LoggerTrait;
+use Smp\Logger\LoggerTrait;
 
 /**
  * A stream connection class.
@@ -103,7 +103,7 @@ class Connection {
     
     if (DEBUG) {
       $metadata = \stream_get_meta_data($this->stream);
-      xdebug_break();
+      // xdebug_break();
       $this->logger->debug("Remote socket: " . $this->remoteName);
     }
   }

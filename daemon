@@ -11,4 +11,4 @@ if [ "xdebug" = "$1" ]; then
 	export XDEBUG_MODE="debug,develop"
 fi
 
-$PHP_EXEC "$APP_DIR/ants.php" "$@"
+$PHP_EXEC "$APP_DIR/smp.php" "$@"

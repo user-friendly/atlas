@@ -4,9 +4,9 @@
  * Process class file.
  */
 
-namespace Ants;
+namespace Smp;
 
-use Ants\Logger\LoggerTrait;
+use Smp\Logger\LoggerTrait;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\GenericEvent;
 

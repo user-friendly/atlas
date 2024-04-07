@@ -4,7 +4,7 @@
  * LoggerFactory class file.
  */
 
-namespace Ants\Logger;
+namespace Smp\Logger;
 
 use Monolog\Logger;
 use \Monolog\Handler\StreamHandler;

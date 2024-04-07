@@ -6,7 +6,7 @@ require __DIR__ . '/vendor/autoload.php';
 
 global $argv, $argc;
 if ($argc > 1) {
-  $class = "Ants\\tests\\{$argv[1]}";
+  $class = "Smp\\tests\\{$argv[1]}";
   $test = new $class();
   return $test->run();
 }

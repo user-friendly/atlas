@@ -4,24 +4,24 @@
  * Server/client stress test.
  */
 
-namespace Ants\tests;
+namespace Smp\tests;
 
-use Ants\Game;
-use Ants\Process;
-use Ants\Logger\LoggerFactory;
-use Ants\Logger\LoggerTrait;
-use Ants\Network\Client;
+use Smp\Game;
+use Smp\Process;
+use Smp\Logger\LoggerFactory;
+use Smp\Logger\LoggerTrait;
+use Smp\Network\Client;
 
 class SwarmTest implements Test {
   use LoggerTrait;
   
   /**
-   * @var \Ants\Process
+   * @var \Smp\Process
    */
   protected $process;
   
   /**
-   * @var \Ants\Main
+   * @var \Smp\Main
    */
   protected $main;
   

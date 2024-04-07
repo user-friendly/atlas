@@ -4,11 +4,11 @@
  * A simple client.
  */
 
-namespace Ants\Network;
+namespace Smp\Network;
 
-use Ants\Game;
-use Ants\Process;
-use Ants\Logger\LoggerTrait;
+use Smp\Game;
+use Smp\Process;
+use Smp\Logger\LoggerTrait;
 
 /**
  * Client class.
@@ -19,7 +19,7 @@ class Client {
   use LoggerTrait;
   
   /**
-   * @var \Ants\Game;
+   * @var \Smp\Game;
    */
   protected $process;
   
@@ -30,7 +30,7 @@ class Client {
   /**
    * Connection.
    * 
-   * @var \Ants\Network\Connection
+   * @var \Smp\Network\Connection
    */
   protected $connection;
   

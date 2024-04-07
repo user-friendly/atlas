@@ -4,9 +4,9 @@
  * LoggerTrait file.
  */
 
-namespace Ants\Logger;
+namespace Smp\Logger;
 
-use Ants\Utility;
+use Smp\Utility;
 
 /**
  * LoggerTrait.  

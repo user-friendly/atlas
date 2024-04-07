@@ -1,5 +1,5 @@
 <?php
-namespace Ants\tests;
+namespace Smp\tests;
 
 interface Test {
   public function run() : int;

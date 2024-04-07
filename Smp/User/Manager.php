@@ -4,7 +4,7 @@
  * User manager class file.
  */
 
-namespace Ants\User;
+namespace Smp\User;
 
 class Manager {
 }

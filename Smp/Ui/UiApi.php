@@ -4,7 +4,7 @@
  * UI API class file.
  */
 
-namespace Ants\Ui;
+namespace Smp\Ui;
 
 interface UiApi {
   function input();

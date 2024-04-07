@@ -4,12 +4,12 @@
  * Memory stress test.
  */
 
-namespace Ants\tests;
+namespace Smp\tests;
 
-use Ants\Game;
-use Ants\Utility;
-use Ants\Logger\LoggerFactory;
-use Ants\Logger\LoggerTrait;
+use Smp\Game;
+use Smp\Utility;
+use Smp\Logger\LoggerFactory;
+use Smp\Logger\LoggerTrait;
 
 class MemoryStressTest implements Test {
     use LoggerTrait;

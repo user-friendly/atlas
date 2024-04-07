@@ -4,15 +4,15 @@
  * Program entry point.
  */
 
-namespace Ants;
+namespace Smp;
 
 // A bit of nasty code, since we don't have preprocessing.
 if (!defined("DEBUG")) {
   define("DEBUG", FALSE);
 }
 
-use Ants\Logger\LoggerFactory;
-use Ants\Logger\LoggerTrait;
+use Smp\Logger\LoggerFactory;
+use Smp\Logger\LoggerTrait;
 
 /**
  * Game class.
@@ -28,7 +28,7 @@ class Game {
   const EXIT_FAILURE = 1;
   
   /**
-   * @var \Ants\Process
+   * @var \Smp\Process
    */
   protected $process;
   

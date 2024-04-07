@@ -1,5 +1,5 @@
 {
-	"name" : "user-friendly/php-ants",
+	"name" : "user-friendly/smp",
 	"description" : "A Multi-User Dungeon, in PHP. Crazy right?",
 	"type" : "project",
 	"license" : "proprietary",
@@ -19,8 +19,8 @@
 	},
 	"autoload" : {
 		"psr-4" : {
-			"Ants\\" : "Ants/",
-			"Ants\\tests\\" : "tests/"
+			"Smp\\" : "Smp/",
+			"Smp\\tests\\" : "tests/"
 		}
 	}
 }

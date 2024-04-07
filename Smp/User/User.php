@@ -4,10 +4,10 @@
  * User class.
  */
 
-namespace Ants\User;
+namespace Smp\User;
 
-use Ants\Logger\LoggerFactory;
-use Ants\Logger\LoggerTrait;
+use Smp\Logger\LoggerFactory;
+use Smp\Logger\LoggerTrait;
 
 class User {
   use LoggerTrait;

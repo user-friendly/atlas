@@ -1,6 +1,6 @@
 # ABOUT
 
-A MUD engine, using PHP.
+SMP is a simple MUD engine, using PHP.
 
 # TELNET NOTES
 

@@ -4,9 +4,9 @@
  * Server class file.
  */
 
-namespace Ants\Network;
+namespace Smp\Network;
 
-use Ants\Logger\LoggerTrait;
+use Smp\Logger\LoggerTrait;
 
 class Server {
   use LoggerTrait;
@@ -35,7 +35,7 @@ class Server {
   /**
    * Client connections.
    * 
-   * @var \Ants\Network\Connection[]
+   * @var \Smp\Network\Connection[]
    */
   protected $connections = [];
   

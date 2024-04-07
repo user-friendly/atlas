@@ -4,7 +4,7 @@
  * Entity class file.
  */
 
-namespace Ants;
+namespace Smp;
 
 /**
  * Base entity.

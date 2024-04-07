@@ -4,7 +4,7 @@
  * UI Text class file.
  */
 
-namespace Ants\Ui;
+namespace Smp\Ui;
 
 class UiText implements UiApi {
   

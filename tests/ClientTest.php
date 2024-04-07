@@ -4,12 +4,12 @@
  * Client test.
  */
 
-namespace Ants\tests;
+namespace Smp\tests;
 
-use Ants\Logger\LoggerFactory;
-use Ants\Logger\LoggerTrait;
-use Ants\Network\Client;
-use Ants\Game;
+use Smp\Logger\LoggerFactory;
+use Smp\Logger\LoggerTrait;
+use Smp\Network\Client;
+use Smp\Game;
 
 class ClientTest implements Test {
   use LoggerTrait;
