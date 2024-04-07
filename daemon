@@ -5,4 +5,10 @@ PHP_EXEC="/usr/bin/php"
 # https://stackoverflow.com/a/17744637/1102191
 APP_DIR="$(cd -P -- "$(dirname -- "$0")" && pwd -P)"
 
+if [ "xdebug" = "$1" ]; then
+	shift
+	export XDEBUG_SESSION="cli"
+	export XDEBUG_MODE="debug,develop"
+fi
+
 $PHP_EXEC "$APP_DIR/ants.php" "$@"
