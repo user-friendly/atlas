@@ -91,4 +91,26 @@ class Utility {
   public static function t($text) {
     return $text;
   }
+  
+  /**
+   * Get the current timestamp.
+   * 
+   * A proxy to \time().
+   * 
+   * @return int
+   */
+  public static function getTime() : int {
+    return \time();
+  }
+  
+  /**
+   * Get current micro timestamp.
+   * 
+   * A proxy to \microtime().
+   * 
+   * @return float
+   */
+  public static function getTimeMicro() : float {
+    return \microtime(TRUE);
+  }
 }
