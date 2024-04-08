@@ -11,6 +11,8 @@ namespace Smp;
  */
 class Utility {
   
+  const NEW_LINE = "\r\n";
+  
   /**
    * KB constant.
    * 
@@ -78,5 +80,15 @@ class Utility {
       return substr($thing, $pos + 1);
     }
     return $thing;
+  }
+  
+  /**
+   * Translate text.
+   * 
+   * @param string $text
+   * @return string
+   */
+  public static function t($text) {
+    return $text;
   }
 }
