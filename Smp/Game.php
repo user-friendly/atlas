@@ -67,10 +67,11 @@ class Game {
     
     while ($this->run) {
       // Process network messages.
-      if (!$this->server->run()) {
-        // No active connections? Give some cpu time back.
-        $this->process->yield();
+      foreach($this->server->run() as $address => $connection) {
+        // TODO Do the communications with the reset of the game here.
       }
+      
+      $this->process->yield();
     }
     
     // Graceful shutdown.

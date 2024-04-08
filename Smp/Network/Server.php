@@ -104,29 +104,19 @@ class Server {
   
   /**
    * Runs network server loop.
-   * 
-   * @return bool
-   *   Returns TRUE if there are connections. FALSE, if there a no connections.
    */
-  public function run() : bool {
+  public function run() {
     $this->accept();
     
     // Move bytes between the OS network buffers and connection class buffers.
     foreach ($this->connections as $key => $connection) {
       $connection->receive()
         ->send();
+      
+      yield $key => $connection;
     }
     
     $this->cleanup();
-    
-    return !empty($this->connections);
-  }
-  
-  // TODO Method name is no good.
-  public function getBuffers() {
-    foreach ($this->connections as $key => $connection) {
-      
-    }
   }
   
   protected function accept() : void {
