@@ -68,6 +68,8 @@ class Server {
   protected $stats = [
     // Total connections handled (includes invalid too).
     'client_connections' => 0,
+    // Connected, but rejected for some reason.
+    'client_rejections' => 0,
   ];
   
   // Not really used (not displayed, but populated?).
@@ -75,13 +77,25 @@ class Server {
   
   protected $run = true;
   
+  /**
+   * Shutdown message.
+   * 
+   * Use this message when forcefully shutting down the server to
+   * notify users, right before they get forcefully disconnected.
+   * There is zero wait time between the message and disconnect.
+   * 
+   * @var string
+   */
+  protected $shutDownMessage = NULL;
+  
   public function __construct() {
     $this->logger = static::getLogger();
     
     // The socket path should always be absolute.
     //$this->socketPath = \getcwd() . '/php-daemon.sock';
     //$this->socketUrl = "unix://{$this->socketPath}";
-    $this->socketUrl = 'tcp://0.0.0.0:9999';
+    //$this->socketUrl = 'tcp://0.0.0.0:9999';
+    $this->socketUrl = 'tcp://[::]:9999';
     
     $this->connectionCleanupLast = \time();
     
@@ -116,14 +130,22 @@ class Server {
   }
   
   protected function accept() : void {
-    // TODO Should this method be part of the Connection class?
-    //      As a static method - ::accpetConnection()
-    if ($new_stream = @\stream_socket_accept($this->socket, 0)) {
-      if (DEBUG) {
-        $this->stats['client_connections']++;
+    $peer_name = NULL;
+    if ($new_stream = @\stream_socket_accept($this->socket, 0, $peer_name)) {
+      $new_connection = new Connection($new_stream, FALSE, $this->connectionTimeoutDefault);
+      
+      if (isset($this->connections[$peer_name])) {
+        $this->logger->warning("Client already connected from remote point: {$peer_name}");
+        $new_connection->close();
+        $this->stats['client_rejections']++;
+        return;
       }
-      $this->logger->debug("Client connected to server.");
-      $this->connections[] = new Connection($new_stream, FALSE, $this->connectionTimeoutDefault);
+      
+      $this->connections[$peer_name] = $new_connection;
+      
+      $this->logger->info("Client connected to server: {$peer_name}");
+      
+      $this->stats['client_connections']++;
     }
   }
   
@@ -156,7 +178,7 @@ class Server {
       $new_count = count($this->connections);
       $diff = $old_count - $new_count;
       if ($diff) {
-        $this->logger->debug("Clients cleaned up $diff");
+        $this->logger->info("Clients cleaned up $diff");
       }
     }
   }
@@ -181,14 +203,51 @@ class Server {
     }
     else {
       if (DEBUG) {
+        // FIXME Why is the helper methond in the Connection class?
         Connection::debugStreamInfo($this->socket, $this->logger);
       }
-      $this->logger->debug("Bound to socket: $this->socketUrl");
+      $this->logger->info("Bound to socket: $this->socketUrl");
     }
   }
   
+  /**
+   * Set shutdown message.
+   *
+   * Use this message when forcefully shutting down the server to
+   * notify users, right before they get forcefully disconnected.
+   * There is zero wait time between the message and disconnect.
+   * 
+   * Ideally, there should be no connected users by the time the
+   * server is ready to shutdown. However, in case of system
+   * kill signal at least be nice to the users.
+   *
+   * @param string $msg
+   */
+  public function setShutdownMessage($msg) {
+    $this->shutDownMessage = $msg;
+  }
+  
+  /**
+   * Shutdown server.
+   * 
+   * Execute the shutdown when the server is ready to be stopped.
+   * This should happen after all persistent data has been saved,
+   * all users were given enough time to prepare and there are no
+   * outstanding operations.
+   */
   public function shutdown() : void {
-    // TODO Do we need to do that for a Unix socket?
+    // Force shutdown on all clients.
+    foreach ($this->connections as $key => $connection) {
+      $address = $connection->getAddress();
+      $this->logger->notice("Disconnect client: {$address}");
+      
+      if ($this->shutDownMessage) {
+        $connection->append($this->shutDownMessage);
+      }
+      $connection->close(TRUE);
+    }
+    $this->cleanup();
+    
     if (!\stream_socket_shutdown($this->socket, STREAM_SHUT_RD)) {
       $this->logger->error("Failed to shutdown socket.");
     }
@@ -197,8 +256,9 @@ class Server {
       $this->logger->error("Failed to close socket.");
     }
     
-    $this->logger->debug("Client connections for this run: {$this->stats['client_connections']} ");
+    $this->logger->info("Client connections for this run: {$this->stats['client_connections']} ");
+    $this->logger->info("Client connections rejected for this run: {$this->stats['client_rejections']} ");
     
-    $this->logger->debug("Graceful shutdown.");
+    $this->logger->info("Shutdown complete.");
   }
 }

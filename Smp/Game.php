@@ -33,11 +33,18 @@ class Game {
   protected $process;
   
   /**
-   * Is the game running?
+   * Control for main game loop.
    * 
    * @var boolean
    */
   protected $run = true;
+  
+  /**
+   * The network server.
+   * 
+   * @var Network\Server
+   */
+  protected $server = NULL;
   
   public function __construct() {
     LoggerFactory::init();
@@ -47,29 +54,40 @@ class Game {
     $this->process->addSignalHandler([$this, "signalShutdown"]);
   }
   
-  // Starts the daemon.
+  /**
+   * Run the main game loop.
+   * 
+   * @return int
+   */
   public function run() : int {
     $this->logger->debug("Start game.");
     
     // Initialize & start listening for connections.
-    $server = new Network\Server($this->process);
+    $this->server = new Network\Server($this->process);
     
     while ($this->run) {
       // Process network messages.
-      if (!$server->run()) {
+      if (!$this->server->run()) {
         // No active connections? Give some cpu time back.
         $this->process->yield();
       }
     }
     
     // Graceful shutdown.
-    $server->shutdown();
+    $this->server->shutdown();
 
-    $this->logger->debug("Graceful shutdown.");
+    $this->logger->debug("Shutdown complete.");
     return $this::EXIT_SUCCESS;
   }
   
+  /**
+   * System signal handler.
+   */
   public function signalShutdown() : void {
     $this->run = false;
+    if ($this->server) {
+      $this->server->setShutdownMessage(Utility::t('Server is forced to shutdown. Sorry & Bye!'));
+    }
+    $this->logger->warning("Received system shutdown signal.");
   }
 }

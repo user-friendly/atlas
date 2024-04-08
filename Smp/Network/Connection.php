@@ -35,6 +35,10 @@ class Connection {
   
   protected $remoteName;
   
+  protected $remoteIp;
+  
+  protected $remotePort;
+  
   /**
    * Stream read size.
    * 
@@ -100,6 +104,9 @@ class Connection {
     $this->setWriteSize($writeSize);
 
     $this->remoteName = @\stream_socket_get_name($this->stream, TRUE);
+    
+    $this->remoteIp = \substr($this->remoteName, 0, \strrpos($this->remoteName, ':'));
+    $this->remotePort = \abs(\intval(\substr($this->remoteName, \strrpos($this->remoteName, ':') + 1)));
     
     if (DEBUG) {
       $this->logger->debug("Remote socket: " . $this->remoteName);
@@ -422,6 +429,33 @@ class Connection {
   protected function setWriteSize(int $size) : self {
     $this->writeSize = $size;
     return $this;
+  }
+  
+  /**
+   * Get the remote IP.
+   * 
+   * @return string
+   */
+  public function getIp() : string {
+    return $this->remoteIp;
+  }
+  
+  /**
+   * Get the remote port.
+   * 
+   * @return int
+   */
+  public function getPort() : int {
+    return $this->remotePort;
+  }
+  
+  /**
+   * Get the remote address.
+   * 
+   * @return string
+   */
+  public function getAddress() : string {
+    return $this->remoteName;
   }
   
   public static function debugStreamInfo($stream, Logger $logger) {
