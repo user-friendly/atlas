@@ -12,8 +12,7 @@ use Smp\tests\Test;
 
 class UserTest extends Test {
   
-  public function run(): int {
-    
+  public function run() : void {
     {
       $context = ['a', 'b'];
       $user = new User(1, "tester", $context);
@@ -25,7 +24,5 @@ class UserTest extends Test {
       $this->assert($new_context[0] === "a" && $new_context[1] === "b",
         "New user has the correct context.");
     }
-    
-    return 0;
   }
 }

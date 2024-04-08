@@ -11,8 +11,7 @@ use Smp\User\Manager;
 
 class ManagerTest extends Test {
   
-  public function run(): int {
-    
+  public function run() : void {
     {
       $this->logger->info("Create a new Manager object.");
       
@@ -74,7 +73,5 @@ class ManagerTest extends Test {
       $this->assert($new_context[0] === "a" && $new_context[1] === "b",
         "Updated user has the correct context.");
     }
-    
-    return 0;
   }
 }

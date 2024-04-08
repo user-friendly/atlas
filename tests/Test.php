@@ -38,5 +38,5 @@ abstract class Test {
     return $assertion;
   }
   
-  abstract public function run() : int;
+  abstract public function run() : void;
 }
