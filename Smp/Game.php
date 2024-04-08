@@ -60,11 +60,11 @@ class Game {
    * @return int
    */
   public function run() : int {
-    $this->logger->debug("Start game.");
     
     // Initialize & start listening for connections.
     $this->server = new Network\Server($this->process);
     
+    $this->logger->debug("Start main game loop.");
     while ($this->run) {
       // Process network messages.
       foreach($this->server->run() as $address => $connection) {
