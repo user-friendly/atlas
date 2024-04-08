@@ -81,7 +81,7 @@ class Connection {
   public function __construct($stream, $blockMode = TRUE, $timeout = 60, $readSize = NULL, $writeSize = NULL) {
     $this->logger = static::getLogger();
     
-    if (!is_resource($stream)) {
+    if (!\is_resource($stream)) {
       throw new \RuntimeException("Connection needs a valid stream resource.");
     }
     $this->stream = $stream;
@@ -99,11 +99,9 @@ class Connection {
     $this->setReadSize($readSize);
     $this->setWriteSize($writeSize);
 
-    $this->remoteName = @stream_socket_get_name($this->stream, TRUE);
+    $this->remoteName = @\stream_socket_get_name($this->stream, TRUE);
     
     if (DEBUG) {
-      $metadata = \stream_get_meta_data($this->stream);
-      // xdebug_break();
       $this->logger->debug("Remote socket: " . $this->remoteName);
     }
   }
@@ -197,7 +195,7 @@ class Connection {
   }
 
   public function __get(string $name) {
-    if (in_array($name, static::$getters)) {
+    if (\in_array($name, static::$getters)) {
       return $this->$name;
     }
     if (DEBUG && \strpos($name, '_debug', 0) === 0) {
@@ -208,7 +206,7 @@ class Connection {
   
   public function __set(string $name, $value) : void {
     $method_name = "set" . \ucfirst($name);
-    if (method_exists($this, $method_name)) {
+    if (\method_exists($this, $method_name)) {
       $this->$method_name($value);
     }
     if (DEBUG && \strpos($name, '_debug', 0) === 0) {
@@ -217,7 +215,7 @@ class Connection {
   }
   
   public function __isset(string $name) {
-    if (in_array($name, static::$getters)) {
+    if (\in_array($name, static::$getters)) {
       return isset($this->$name);
     }
     if (DEBUG && \strpos($name, '_debug', 0) === 0) {
