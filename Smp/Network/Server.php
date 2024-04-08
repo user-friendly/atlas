@@ -141,9 +141,13 @@ class Server {
   
   /**
    * Cleanup invalid client connections.
+   * 
+   * @param boolean $timeout
+   *   Whether to respect the timeout. Defaults to TRUE.
+   *   Set to FALSE to force a cleanup.
    */
-  protected function cleanup() : void {
-    if (\time() - $this->connectionCleanupLast < $this->connectionCleanupTime) {
+  protected function cleanup($timeout = TRUE) : void {
+    if ($timeout && (\time() - $this->connectionCleanupLast < $this->connectionCleanupTime)) {
       return;
     }
     
@@ -236,7 +240,8 @@ class Server {
       }
       $connection->close(TRUE);
     }
-    $this->cleanup();
+    // Force cleanup.
+    $this->cleanup(FALSE);
     
     if (!\stream_socket_shutdown($this->socket, STREAM_SHUT_RD)) {
       $this->logger->error("Failed to shutdown socket.");
