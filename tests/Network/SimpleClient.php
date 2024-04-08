@@ -8,7 +8,7 @@ namespace SmpTest\Network;
 
 use SmpTest\Logger;
 
-class Client {
+class SimpleClient {
   const NEW_LINE = "\r\n";
   
   protected $logger = NULL;

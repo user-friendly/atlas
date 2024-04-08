@@ -13,7 +13,7 @@
 
 namespace SmpTest;
 
-use SmpTest\Network\Client;
+use SmpTest\Network\SimpleClient;
 
 class ClientTestSimple implements Test {
   public function run() : int {
@@ -26,7 +26,7 @@ class ClientTestSimple implements Test {
     $address = $argv[2];
     $port = $argv[3];
     
-    $client = new Client($address, $port);
+    $client = new SimpleClient($address, $port);
     $client->connect();
     
     $client->test();
