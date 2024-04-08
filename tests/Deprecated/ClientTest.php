@@ -19,7 +19,7 @@ class ClientTest implements Test {
     $this->logger = static::getLogger();
   }
   
-  public function run(): int {
+  public function run() : void {
     $main = new Game();
     
     try {
