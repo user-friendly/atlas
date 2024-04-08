@@ -153,16 +153,6 @@ class Connection {
   }
   
   /**
-   * Process connection.
-   */
-  public function process() : self {
-    
-    
-    
-    return $this;
-  }
-  
-  /**
    * Sends data to the receiver.
    */
   public function send() : self {
