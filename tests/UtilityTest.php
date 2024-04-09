@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @file
  * Utility test case file.
@@ -8,12 +8,18 @@ namespace Smp\tests;
 
 use Smp\Utility;
 
-class UtilityTest extends Test {
-  public function run() : void {
+use PHPUnit\Framework\Attributes\CoversFunction;
+use PHPUnit\Framework\Attributes\CoversClass;
+
+#[CoversClass(Utility::class)]
+#[CoversFunction('getTime')]
+#[CoversFunction('getTimeMicro')]
+final class UtilityTest extends BaseTest {
+  public function testGetTimestamps() : void {
     $ts = Utility::getTime();
     $mts = Utility::getTimeMicro();
     
-    $this->assert(\is_int($ts), "Timestamp is int: {$ts}.");
-    $this->assert(\is_float($mts), "Micro timestamp is float: {$mts}.");
+    $this->assertIsInt($ts, "Timestamp is int: {$ts}.");
+    $this->assertIsFloat($mts, "Micro timestamp is float: {$mts}.");
   }
 }

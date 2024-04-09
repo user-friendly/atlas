@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @file
  * Network Server test class.
@@ -6,10 +6,11 @@
 
 namespace Smp\tests\Network;
 
-use Smp\tests\Test;
+use PHPUnit\Framework\TestCase;
 
-class ServerTest extends Test {
-  public function run() : void {
-    $this->assert(FALSE, "TOOD Implement test case.");
+final class ServerTest extends TestCase {
+  public function testRun() : void {
+    // Stop here and mark this test as incomplete.
+    $this->markTestIncomplete("This test has not been implemented yet.");
   }
 }

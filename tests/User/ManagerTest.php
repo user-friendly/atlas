@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @file
  * User Manager test file.
@@ -6,72 +6,117 @@
 
 namespace Smp\tests\User;
 
-use Smp\tests\Test;
 use Smp\User\Manager;
 
-class ManagerTest extends Test {
+use Smp\tests\BaseTest;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversFunction;
+use PHPUnit\Framework\Attributes\DataProvider;
+
+#[CoversClass(Manager::class)]
+#[CoversFunction('__construct')]
+#[CoversFunction('get')]
+#[CoversFunction('create')]
+#[CoversFunction('update')]
+#[CoversFunction('delete')]
+final class ManagerTest extends BaseTest {
   
-  public function run() : void {
-    {
-      $this->logger->info("Create a new Manager object.");
-      
-      $manager = new Manager();
-      
-      $context = ['a', 'b'];
-      $user = $manager->create("tester", "123", $context);
-      
-      $this->assert($user->getId() === 1, "New user has the correct id.");
-      $this->assert($user->getUsername() === "tester", "New user has the correct username.");
-      
-      $new_context = $user->getContext();
-      $this->assert($new_context[0] === "a" && $new_context[1] === "b",
-        "New user has the correct context.");
+  public static function userProvider() : array {
+    $context = ['a', 'b'];
+    return [
+      // user, password, context
+      ['user1', '123', $context],
+      ['user2', '456', $context],
+      ['user3', 'qwerty', $context],
+    ];
+  }
+  
+  #[DataProvider('userProvider')]
+  public function testCreate($username, $password, $context) : void {
+    $manager = new Manager();
+    
+    $user = $manager->create($username, $password, $context);
+    
+    $this->assertIsInt($user->getId(), "New user id is an int.");
+    $this->assertSame(1, $user->getId(), "New user has the correct id.");
+    $this->assertSame($username, $user->getUsername(), "New user has the correct username.");
+    
+    $new_context = $user->getContext();
+    
+    $this->assertEquals($context, $new_context, "New user has the correct context.");
+  }
+  
+  public function testCreateMultiple() : void {
+    $users = static::userProvider();
+    
+    $manager = new Manager();
+    
+    foreach ($users as $new_user_info) {
+      $manager->create($new_user_info[0], $new_user_info[1], $new_user_info[2]);
     }
     
-    {
-      $this->logger->info("Create a new Manager object. The previous one should have been deleted.");
+    foreach ($users as $id => $new_user_info) {
+      $uid = $id + 1;
       
-      $manager = new Manager();
+      $user = $manager->get($uid);
       
-      $context = ['a', 'b'];
-      $user = $manager->create("tester1", "123", $context);
-      
-      $this->assert($user->getId() === 1, "New user has the correct id.");
-      $this->assert($user->getUsername() === "tester1", "New user has the correct username.");
+      $this->assertSame($uid, $user->getId(), "New user has the correct id.");
+      $this->assertSame($new_user_info[0], $user->getUsername(), "New user has the correct username.");
       
       $new_context = $user->getContext();
-      $this->assert($new_context[0] === "a" && $new_context[1] === "b",
-        "New user has the correct context.");
       
-      
-      $user = $manager->create("tester2", "123");
-      
-      $this->assert($user->getId() === 2, "New user has the correct id.");
-      $this->assert($user->getUsername() === "tester2", "New user has the correct username.");
-      
-      $new_context = $user->getContext();
-      $this->assert(empty($new_context), "New user has the correct empty context.");
-      
-      $user = NULL;
-      
-      $user = $manager->get(2);
-      $this->assert($user->getId() === 2, "Existing user has the correct id.");
-      $this->assert($user->getUsername() === "tester2", "Existing user has the correct username.");
-      
-      $new_context = $user->getContext();
-      $this->assert(empty($new_context), "Existing user has the correct empty context.");
-      
-      $user = $manager->update($user->getId(), "tester3", "456", $context);
-      
-      $this->assert(\is_object($user), "Updated user.");
-      $user = $manager->get(2);
-      
-      $this->assert($user->getId() === 2, "Updated user has the correct id.");
-      $this->assert($user->getUsername() === "tester3", "Updated user has the correct username.");
-      
-      $new_context = $user->getContext();
-      $this->assert($new_context[0] === "a" && $new_context[1] === "b",
-        "Updated user has the correct context.");
+      $this->assertEquals($new_user_info[2], $new_context, "New user has the correct context.");
     }
   }
+  
+  public function testUpdate() {
+    $context = ['a', 'b'];
+    $manager = new Manager();
+    
+    $user = $manager->create("user1", "123");
+    
+    $new_user = $manager->update($user->getId(), "user2", "456", $context);
+    
+    $this->assertIsObject($new_user, "Returned updated user is an object.");
+    $this->assertNotEquals($new_user, $user, "Returned updated user is not the same object as the old user.");
+    $this->assertSame($user->getId(), $new_user->getId(), "Returned updated user has the correct id.");
+    $this->assertSame("user2", $new_user->getUsername(), "Returned updated user has the correct username.");
+    $this->assertSame($context, $new_user->getContext(), "Returned updated user has the correct context.");
+    
+    unset($new_user);
+    
+    $new_user = $manager->get(1);
+    
+    $this->assertIsObject($new_user, "Updated user is an object.");
+    $this->assertNotEquals($new_user, $user, "Updated user is not the same object as the old user.");
+    $this->assertSame($user->getId(), $new_user->getId(), "Updated user has the correct id.");
+    $this->assertSame("user2", $new_user->getUsername(), "Updated user has the correct username.");
+    $this->assertSame($context, $new_user->getContext(), "Updated user has the correct context.");
+  }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

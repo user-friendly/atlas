@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+PHP_EXEC="/usr/bin/php"
+
+# https://stackoverflow.com/a/17744637/1102191
+APP_DIR="$(cd -P -- "$(dirname -- "$0")" && pwd -P)"
+
+TESTS_DIR="$APP_DIR/tests"
+
+if [ "xdebug" = "$1" ]; then
+	shift
+	export XDEBUG_SESSION="cli"
+	export XDEBUG_MODE="debug,develop"
+fi
+
+echo "Change working dir to test dir: $TESTS_DIR"
+cd $TESTS_DIR
+
+$PHP_EXEC "$APP_DIR/vendor/bin/phpunit" "$@"
