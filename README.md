@@ -102,7 +102,57 @@ Rooms - type of container that has space... What is space? Can have coordinates?
 - Are universe,..., chunk rooms?
 - *Should* "rooms" be called something else?
 
+### Sentient
+
+As opposed to non-sentient? Should there be such a distinction?
+
+Anything that has a AI/Player controller?
+
+TBD
+
+### Mechanical
+
+Doors, levers, retractable bridges, etc?
+
+Can be controlled, but indirectly. I.e. a sentient controller acts on a mechanical entity.
+
+May impact game physics, like the door cutting of access to a room, or maybe flooding a room with water.
+
+(This is very much Dwarf Fortress like...)
+
+### Items
+
+Anything non-sentient and non-container?
+
+TBD
+
+### ?Static?
+
+Furniture? Anything that can be interacted with, but is not mechanical.
+
+A chest can be opened (interacted with) but does not change game physics.
+
+What would be the benefit of having this be a distinct entity?
+
 ## Network
+
+Communication with the game engine.
+	- Event/callbacks? Send to and from controller entity buffers?
+	- Bulk operations - IO on a buffer map/queue/etc data structure?
+	- ~Directly attach connection to control entity? Not optimizing yet so can be decoupled.~
+		- This is not a good idea?
+
+Translating input (abstract) to game commands?
+	- No idea about terms? Is it translations? Bridge design pattern?
+	- What will control the game entities?
+	
+Above mentions game commands (as class/objects). Commands seem heavy, as opposed to simply calling entity/controller methods.
+
+## Renderer
+
+Rendering the engine output to whatever frontend is used. For a MUD type game, it's text and then passed to the network layer.
+
+Sometime into the future it can be a graphical frontend, which could be a combination of text and graphics, could be 2D could be 2.5D (3D with locked camera, isometric Diablo/Kenshi style).
 
 # Game Setting
 
