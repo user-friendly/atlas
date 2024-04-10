@@ -1,9 +1,3 @@
-<style>
-	tab {
-		margin-left: 20px;
-	}
-</style>
-
 # ABOUT
 
 SMP is a simple MUD engine, using PHP.
@@ -42,7 +36,7 @@ Simple MUD in PHP.
 Composition vs inheritance? Perhaps shallow class hierarchies and lean on composition.
 
 Any character should be playable.<br />
-<tab />- Any sentient character is included (animals, mythical creatures, drones, etc).
+&nbsp;&nbsp;&nbsp;&nbsp;- Any sentient character is included (animals, mythical creatures, drones, etc).
 
 **Logical hierarchy**
 
@@ -70,14 +64,14 @@ Rooms **must** be entities.
 - *May* have a display description. Same issues as the label. Looks like these are a component, but does it merit the extra resource?
 
 Proposed fields:<br />
-<tab />Required:<br />
-<tab /><tab />Id: Int - unique identifier.<br />
-<tab /><tab />~SerialId: Int - serial identifier.~<br />
-<tab /><tab />Name: String - machine name.<br />
-<tab />Optional:<br />
-<tab /><tab />Type: Enum/String/Object - Type of entity.<br />
-<tab /><tab />Label: String - display label.<br />
-<tab /><tab />Description: String - long text (longer than label) display description.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;Required:<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Id: Int - unique identifier.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~SerialId: Int - serial identifier.~<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Name: String - machine name.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;Optional:<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Type: Enum/String/Object - Type of entity.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Label: String - display label.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Description: String - long text (longer than label) display description.<br />
 
 ## Types of Entities
 
@@ -145,7 +139,7 @@ Communication with the game engine.
 Translating input (abstract) to game commands?
 	- No idea about terms? Is it translations? Bridge design pattern?
 	- What will control the game entities?
-	
+
 Above mentions game commands (as class/objects). Commands seem heavy, as opposed to simply calling entity/controller methods.
 
 ## Renderer
