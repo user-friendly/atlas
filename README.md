@@ -39,6 +39,8 @@ Simple MUD in PHP.
 
 ## Game World
 
+Composition vs inheritance? Perhaps shallow class hierarchies and lean on composition.
+
 Any character should be playable.<br />
 <tab />- Any sentient character is included (animals, mythical creatures, drones, etc).
 
@@ -51,8 +53,112 @@ Universe &rarr; World / Planet / Large body &rarr; Continent / Region &rarr; ?Ch
 Only applies to universes?<br />
 Different servers/DBs?
 
+Universe, world, continent, & chunk **must** be entities.
+
+Rooms **must** be entities.
+
 ## Entities
+
+- Base class (abstract, interface) for all game objects, in the context of game mechanics, not sound, not FX, not textures, not mesh, etc.
+- Use components? Gets too complicated? Inheritance can get troublesome.
+- **Must** have a unique integer identifier.
+	- Could be a serial id, assigned by a manger/factory class?
+- **Must** have a name. It will be used as a machine/engine name. Different from a display label. It's more of a one line descriptor.
+- *May* have a type. Could be an enum. Could just be the type of component. Limited to one type component per entity. Type component inheritance. This may have to be a **must**...
+- *May* include UUID later on. May be beneficial for storage, in the context of a global DB.
+- *May* have a display label. However, translation could make things complicated. The base entity should be simple.
+- *May* have a display description. Same issues as the label. Looks like these are a component, but does it merit the extra resource?
+
+Proposed fields:<br />
+<tab />Required:<br />
+<tab /><tab />Id: Int - unique identifier.<br />
+<tab /><tab />~SerialId: Int - serial identifier.~<br />
+<tab /><tab />Name: String - machine name.<br />
+<tab />Optional:<br />
+<tab /><tab />Type: Enum/String/Object - Type of entity.<br />
+<tab /><tab />Label: String - display label.<br />
+<tab /><tab />Description: String - long text (longer than label) display description.<br />
 
 ## Types of Entities
 
+### Containers
+
+- Can contain other containers and, of course, other entities.
+	- But containers are entities?
+- Top level are universe, world, continent, chunk, room.
+- *Should* the top container have a list to all containers of all types? Central authority? Perhaps the central authority is the universe manager/factory? This way container that is created can be tracked, regardless of where it is in the graph.
+	- This implies one flat list, along with node connections (graph verts and edges).
+- Hierarchy/Tree vs Graph
+	- ~**Must** have only (1) parent?~ That's practically impossible. Does not make sense for rooms.
+	- Can have zero (0) to many (N) children.
+	- Research one vs many, parents type of graphs. Or are they jsut a tree vs a graph?
+		- What was this note about? Doesn't make much sense.
+	- Obviously, room connections will be represented as a graph(s).
+	- At which point in the container hierarchy (what would be a good name?) a graph is contained?
+		- Continent?
+		- Chunk?
+
+Rooms - type of container that has space... What is space? Can have coordinates? Wouldn't that be more of a chunk in 2+ dimensions?<br />
+- Are universe,..., chunk rooms?
+- *Should* "rooms" be called something else?
+
 ## Network
+
+# Game Setting
+
+Name: **Proxima**
+
+The game setting is an implementation of a story, world in which the players will participate in.
+
+The following describes a **single-player** game. Yes, this contradicts of the project's main game engine design goals.<br />
+If a move to the full realization of the following game setting is ever done, it will be in a 2.5D type of game, carrying over some of the game design from the MUD. The MUD can still implement some of the game mechanics described in this section.
+
+## Type
+
+Far future, sci-fi, post-apocaliptyic, ruined empire. Game elements from Kenshi/StarSector/M&B.
+
+**Open World** - no level restrictions, very much like Kenshi/Starsector. Player is responsible for their decisions (safety) and progression.
+
+**No Instances** - Like in MMOs or some 
+
+## Sentient Life
+
+What will be the different sentient entity organizations?
+- Nations, factions, corporations, guilds, clans, ad-hoc groups?
+- Research the meaning of all the above terms.
+- Have on neutral faction, that is the default. Does not mean, they're not attackable. (Kenshi like? What are the issues I had with Kenshi factions? Did I have any?)
+
+Squads (like FTL? I never even played FTL... so maybe not). More like a random group of people can band together. Much like Kenshi. Howevere, having generic recruits/soldiers/employees like in StarSector/M&B should be included. Have expandable peons.
+- "Squads" sounds weird. More like employees, personnel, just the people comprising player faction/clan/guild?
+- Squads can board other ships, stations and other traversable SPACE objects, give the environment allows it.
+- Environment includes SPACE weather (radiation, meteorites, etc.), topography (cliffs, canyons, etc.), chemical composition (acid, no oxygen).
+	- Should aggressive macrobial life be a thing?
+	- The "environment" should have its own section.
+	- Could include resource gathering, base building in the far future development of the game... if that ever happens.
+
+All NPCs are equally capable, relative to the player characters (Kenshi style). From a physics/game mechanics pov, no distinction between player/non-player characters.
+
+Have drones. These are semi-sentient, more like narrow AI. Whoever controls them (and control can be easily swapped, by hacking for instance) sets their faction.
+
+Player can do spacewalks and should, when going through derelicts/wreckage. Just have spacewalks when it makes sense.
+
+## Environment
+
+Avoid having planets be visitable (visit-able?). You can do this by having the planetary system be inhabitable (i.e. no habitable planets). Could have outposts on moons though?
+
+Players can visit orbital space stations, big ships (that act as space stations), derelicts, wreckage, small asteroids, random points in space (player can chose to just stop somewhere along a travel path and do a spacewalk).
+
+More TBD
+
+## Vehicles
+
+Have starships. But they're busted and all. Can work towards nice ones. The BMWs/Mercedes of spaceships.
+- Realistic physics (orbital mechanics). Maybe something like The Expanse (TV series)?
+- **No** custom in-game ship designs. Ship hulls are stock or provided by mods.
+- Squads can be deployed to player piloted ship, only in the case of boarding by enemy ship.
+
+Vehicles can be customized, but **not** their HULL. Pretty much like StarSector.
+
+Could include land/small vehicles.
+
+Keep variety of ships small. Lean on squad equipment and character.
