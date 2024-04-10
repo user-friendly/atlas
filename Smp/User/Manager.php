@@ -146,4 +146,18 @@ class Manager {
     unset($this->usersPass[$uid]);
     return FALSE;
   }
+  
+  /**
+   * Get user password.
+   * 
+   * @param mixed $uid
+   * @return string|FALSE
+   *   Returns the unsecured password or FALSE if one was not found.
+   */
+  public function getPass($uid) : string|FALSE {
+    if ($this->get($uid) && isset($this->usersPass[$uid])) {
+      return $this->usersPass[$uid];
+    }
+    return FALSE;
+  }
 }
