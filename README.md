@@ -55,6 +55,8 @@ Input system has Text input class. How ill the network system feed text into the
 
 ## User
 
+At present, the Game class should be responsible for the player/user/client association.
+
 ### States
 
 The terms "player", "user", "client" are distinct. A user controls a player in game. Before a player is spawned in the game world and associated to a user, the user must first be authenticated. A client is (in this iteration of the engine) a network connection and should have a pretty straight forward connection to a user. A user is in the center of all three objects.
@@ -64,11 +66,11 @@ There are two main user states:
 * Login
 * In game
 
-The difference is not associated with a game entity (player) and the latter is. 
+The difference is not associated with a game entity (player) and the latter is. This state should rarely change, per user.
 
 ### Manager
 
-The User Manager must associate a client with a user, perform authentication & authorization.
+The User Manager must perform authentication & authorization.
 
 ## Systems Comms
 
