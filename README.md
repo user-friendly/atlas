@@ -142,11 +142,31 @@ Translating input (abstract) to game commands?
 
 Above mentions game commands (as class/objects). Commands seem heavy, as opposed to simply calling entity/controller methods.
 
+What class should be responsible for the user/network connection map? Should it be the network Server or some intermediate class? Definitely not in the User Manager. ~But why not?~ (Really, old me? Because the user manages users and should have one purpose.)
+
 ## Renderer
 
 Rendering the engine output to whatever frontend is used. For a MUD type game, it's text and then passed to the network layer.
 
 Sometime into the future it can be a graphical frontend, which could be a combination of text and graphics, could be 2D could be 2.5D (3D with locked camera, isometric Diablo/Kenshi style).
+
+## Ui
+
+Ui class can have the user menu state? Or is it the game state? Should the state be stored in the Ui manager object, just like the password in the User manager? Map vs a user object member?
+
+## Input System
+
+Input system has Text input class. How ill the network system feed text into the Text input class? Input system is basically the opposite of the Renderer system? (What? Opposite?) On the "left side" it should have the same access as the Render system (see diagram on real life notepad).
+
+## Systems Comms
+
+Communication between (game engine) systems - how? Event queue or direct member calls? [Event Driven Comms - Yes or No?](https://gamedev.stackexchange.com/questions/7718/event-driven-communication-in-a-game-engine-yes-or-no)
+
+What are the benefits of an event queue? User chat, in case of a graphical renderer. (what? user chat, what?) THere will be implicit queues, besides a dedicated event system. (Surely, it can't be one generic event queue for all systems? Performance?)
+
+## User States
+
+The terms "player", "user", "client" are distinct. A user controls a player in game. Before a player is spawned in the game world and associated to a user, the user must first be authenticated. A client is (in this iteration of the engine) a network connection and should have a pretty straight forward connection to a user. A user is in the center of all three objects.
 
 # Game Setting
 
