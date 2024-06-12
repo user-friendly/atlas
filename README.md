@@ -70,7 +70,9 @@ The difference is not associated with a game entity (player) and the latter is. 
 
 ### Manager
 
-The User Manager must perform authentication & authorization.
+The User Manager must perform authentication & authorization, CRUD operations, temporary users (for login).
+
+How will the transition of a temporary user to a logged in user be implemented?
 
 ## Systems Comms
 
@@ -78,13 +80,24 @@ Communication between (game engine) systems - how? Event queue or direct member 
 
 What are the benefits of an event queue? User chat, in case of a graphical renderer. (what? user chat, what?) THere will be implicit queues, besides a dedicated event system. (Surely, it can't be one generic event queue for all systems? Performance?)
 
+Fixed size arrays might be the way to go (if going with C/C++).
+
 ## Network
+
+Currently, there are 3 incoming events:
+	- New connection
+	- Disconnect (forced, timeout)
+	- Input
+
+There are 2 outgoing events:
+	- Logout (graceful connection closure)
+	- Output
 
 Communication with the game engine.
 	- Event/callbacks? Send to and from controller entity buffers?
 	- Bulk operations - IO on a buffer map/queue/etc data structure?
 	- ~Directly attach connection to control entity? Not optimizing yet so can be decoupled.~
-		- This is not a good idea?
+		- This is not a good idea. Why not?
 
 Translating input (abstract) to game commands?
 	- No idea about terms? Is it translations? Bridge design pattern?
