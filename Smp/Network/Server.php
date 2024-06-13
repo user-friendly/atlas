@@ -46,7 +46,12 @@ class Server {
    */
   protected $connectionsAddressMap = [];
   
-  protected $connectionNextId = 0;
+  /**
+   * 
+   * 
+   * @var integer
+   */
+  protected $connectionCurrentId = 0;
   
   /**
    * Connections cleanup frequency (seconds)
@@ -116,7 +121,7 @@ class Server {
     if ($new_stream = @\stream_socket_accept($this->socket, 0, $peer_name)) {
       $new_connection = new Connection($new_stream, FALSE, $this->connectionTimeoutDefault);
       
-      $key = ++$this->connectionNextId;
+      $key = $this->getNextClientId();
       // TODO Make a server config to control multiple host connections.
       // $address = $new_connection->getIp();
       $address = $new_connection->getAddress();
@@ -217,6 +222,10 @@ class Server {
     }
   }
   
+  protected function getNextClientId() {
+    return ++$this->connectionCurrentId;
+  }
+  
   /**
    * Runs network server loop.
    */
@@ -230,6 +239,18 @@ class Server {
     }
     
     $this->cleanup();
+  }
+  
+  public function input() {
+    foreach ($this->connections as $key => $connection) {
+      if ($input = $connection->consume()) {
+        yield $key => $input;
+      }
+    }
+  }
+  
+  public function output($key, $output) {
+    @$this->connections[$key]?->append($output);
   }
   
   /**

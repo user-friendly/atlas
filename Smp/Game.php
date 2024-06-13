@@ -46,6 +46,15 @@ class Game {
    */
   protected $server = NULL;
   
+  /**
+   * Maps network clients to users.
+   * 
+   * The key is the client id. Value is user id.
+   * 
+   * @var array
+   */
+  protected $clientMap = [];
+  
   public function __construct() {
     LoggerFactory::init();
     $this->logger = static::getLogger();
@@ -60,16 +69,34 @@ class Game {
    * @return int
    */
   public function run() : int {
-    
     // Initialize & start listening for connections.
-    $this->server = new Network\Server($this->process);
+    $this->server = new Network\Server();
     
     $this->server->setListenerConnected(array($this, 'handleClientConnected'));
     $this->server->setListenerDisconnected(array($this, 'handleClientDisconnected'));
     
+    $tmp_messageInterval = 5;
+    $tmp_messageLast = Utility::getTime();
+    
     $this->logger->debug("Start main game loop.");
     while ($this->run) {
       $this->server->run();
+      
+      if (0 < count($this->clientMap)) {
+        foreach ($this->server->input() as $key => $input) {
+          if (DEBUG) {
+            $this->logger->debug("User [$key] input: {$input}");
+          }
+        }
+        
+        if (Utility::getTime() > $tmp_messageLast + $tmp_messageInterval) {
+          // FIXME Test method.
+          foreach ($this->clientMap as $key => $uid) {
+            $this->server->output($key, "This is a test message. Your user id is: {$uid}\n" );
+          }
+          $tmp_messageLast = Utility::getTime();
+        }
+      }
       
       $this->process->yield();
     }
@@ -85,11 +112,35 @@ class Game {
     if (DEBUG) {
       $this->logger->debug("New user connected, client id: $key");
     }
+    
+    if (isset($this->clientMap[$key])) {
+      // Hard fail here, this should never happen.
+      throw new \RuntimeException("Client already present in user map: {$key}");
+    }
+    
+    // FIXME Tie in with the user system.
+    $this->clientMap[$key] = $key;
   }
   
   public function handleClientDisconnected($key) {
     if (DEBUG) {
       $this->logger->debug("User disconnected, client id: $key");
+    }
+    
+    if (isset($this->clientMap[$key])) {
+      $this->logger->warning("User's client unexpectedly disconnected, client id: $key");
+      // TODO Some some user forced disconnect here, if user is present in the map.
+      //      If the client disconnected (for whatever reason) before being removed
+      //      from the map, this would indicated a forced disconnection.
+    }
+    
+    // Finally, remove the map entry.
+    unset($this->clientMap[$key]);
+    
+    if (DEBUG) {
+      if (empty($this->clientMap)) {
+        $this->logger->debug("There are no more users connected to the server.");
+      }
     }
   }
   
