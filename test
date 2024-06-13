@@ -16,4 +16,8 @@ fi
 echo "Change working dir to test dir: $TESTS_DIR"
 cd $TESTS_DIR
 
-$PHP_EXEC "$APP_DIR/vendor/bin/phpunit" "$@"
+if [ "${1#Simple}" != "$1" ]; then
+	$PHP_EXEC "../test-simple.php" "$@"
+else
+	$PHP_EXEC "$APP_DIR/vendor/bin/phpunit" "$@"
+fi
