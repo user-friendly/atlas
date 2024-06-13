@@ -29,6 +29,7 @@ final class ManagerTest extends BaseTest {
       ['user1', '123', $context],
       ['user2', '456', $context],
       ['user3', 'qwerty', $context],
+      ['user3', NULL, $context],
     ];
   }
   

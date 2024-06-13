@@ -13,6 +13,9 @@ class Manager {
   use LoggerTrait;
   
   /**
+   * A map of users.
+   * 
+   * Keys are user ids.
    * 
    * @var \Smp\User\User
    */
@@ -154,8 +157,8 @@ class Manager {
    * @return string|FALSE
    *   Returns the unsecured password or FALSE if one was not found.
    */
-  public function getPass($uid) : string|FALSE {
-    if ($this->get($uid) && isset($this->usersPass[$uid])) {
+  public function getPass($uid) : string|NULL|FALSE {
+    if ($this->get($uid) && array_key_exists($uid, $this->usersPass)) {
       return $this->usersPass[$uid];
     }
     return FALSE;
