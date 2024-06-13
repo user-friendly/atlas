@@ -15,6 +15,8 @@ use Smp\Logger\LoggerFactory;
 use Smp\Logger\LoggerTrait;
 use Smp\User\Manager as UserManager;
 
+// TODO Add timeout for users. After a certain period of inactivity, kick the user.
+
 /**
  * Game class.
  * 

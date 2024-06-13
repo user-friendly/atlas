@@ -41,7 +41,9 @@ Sometime into the future it can be a graphical frontend, which could be a combin
 
 ## Ui
 
-Ui class can have the user menu state? Or is it the game state? Should the state be stored in the Ui manager object, just like the password in the User manager? Map vs a user object member?
+~Ui class can have the user menu state? Or is it the game state? Should the state be stored in the Ui manager object, just like the password in the User manager? Map vs a user object member?~
+
+
 
 ### Elements
 
@@ -197,6 +199,10 @@ Furniture? Anything that can be interacted with, but is not mechanical.
 A chest can be opened (interacted with) but does not change game physics.
 
 What would be the benefit of having this be a distinct entity?
+
+## TODO/Task
+
+* Add timeout for users. After a certain period of inactivity, kick the user. Where should the activity timer be in? The user object? Clean up idlers, similar to the cleanup method of the network Server.
 
 # Game Setting
 
