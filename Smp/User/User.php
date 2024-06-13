@@ -17,7 +17,9 @@ use Smp\Logger\LoggerTrait;
  */
 
 /**
- * Server user class.
+ * User class.
+ * 
+ * Users are objects representing a human. Synonymous to "account".
  */
 class User {
   use LoggerTrait;
@@ -25,6 +27,22 @@ class User {
   protected $id = 0;
   protected $username = NULL;
   protected $context = NULL;
+  
+  /**
+   * User state.
+   * 
+   * The initial state should always be the login state.
+   * 
+   * @var UserState
+   */
+  protected UserState $state = UserState::Login;
+  
+  /**
+   * A unique identifier.
+   * 
+   * @var string
+   */
+  protected $uuid = NULL;
   
   public function __construct(int $id, string $username, array $context = []) {
     LoggerFactory::init();
@@ -35,8 +53,19 @@ class User {
     $this->context = $context;
   }
   
+  /**
+   * User identifier.
+   * 
+   * This is the temp/in-memory object identifier.
+   * 
+   * @return int
+   */
   public function getId() : int {
     return $this->id;
+  }
+  
+  public function getUUID() : string {
+    return $this->uuid;
   }
   
   public function getUsername() : string {
@@ -46,5 +75,12 @@ class User {
   public function getContext() : array {
     return $this->context;
   }
+  
+  public function getState() : UserState {
+    return $this->state;
+  }
+  
+  public function setState(UserState $new_state) : void {
+    $this->state = $new_state;
+  }
 }
-

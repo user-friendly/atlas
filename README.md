@@ -59,6 +59,8 @@ Input system has Text input class. How ill the network system feed text into the
 
 At present, the Game class should be responsible for the player/user/client association.
 
+A user id should be a temporary/in-memory identifier. The database id should be a UUID (or some other more robust unique identifier).
+
 ### States
 
 The terms "player", "user", "client" are distinct. A user controls a player in game. Before a player is spawned in the game world and associated to a user, the user must first be authenticated. A client is (in this iteration of the engine) a network connection and should have a pretty straight forward connection to a user. A user is in the center of all three objects.
