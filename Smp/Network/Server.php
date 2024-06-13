@@ -40,6 +40,15 @@ class Server {
   protected $connections = [];
   
   /**
+   * Client address map.
+   * 
+   * @var array
+   */
+  protected $connectionsAddressMap = [];
+  
+  protected $connectionNextId = 0;
+  
+  /**
    * Connections cleanup frequency (seconds)
    * 
    * @var integer
@@ -72,10 +81,10 @@ class Server {
     'client_rejections' => 0,
   ];
   
-  // Not really used (not displayed, but populated?).
-  protected $stat_total_bytes_sent = 0;
-  
   protected $run = true;
+  
+  protected $listenerConnected = NULL;
+  protected $listenerDisconnected = NULL;
   
   /**
    * Shutdown message.
@@ -102,40 +111,32 @@ class Server {
     $this->listen();
   }
   
-  /**
-   * Runs network server loop.
-   */
-  public function run() {
-    $this->accept();
-    
-    // Move bytes between the OS network buffers and connection class buffers.
-    foreach ($this->connections as $key => $connection) {
-      $connection->receive()
-        ->send();
-      
-      yield $key => $connection;
-    }
-    
-    $this->cleanup();
-  }
-  
   protected function accept() : void {
     $peer_name = NULL;
     if ($new_stream = @\stream_socket_accept($this->socket, 0, $peer_name)) {
       $new_connection = new Connection($new_stream, FALSE, $this->connectionTimeoutDefault);
       
-      if (isset($this->connections[$peer_name])) {
-        $this->logger->warning("Client already connected from remote point: {$peer_name}");
+      $key = ++$this->connectionNextId;
+      // TODO Make a server config to control multiple host connections.
+      // $address = $new_connection->getIp();
+      $address = $new_connection->getAddress();
+      
+      if (isset($this->connectionsAddressMap[$address])) {
+        $this->logger->warning("Client already connected from remote address: {$address}");
         $new_connection->close();
         $this->stats['client_rejections']++;
         return;
       }
       
-      $this->connections[$peer_name] = $new_connection;
+      $this->connections[$key] = $new_connection;
+      $this->connectionsAddressMap[$address] = $key;
       
       $this->logger->info("Client connected to server: {$peer_name}");
-      
+            
       $this->stats['client_connections']++;
+      
+      // Finally, notify listener.
+      call_user_func($this->listenerConnected, $key);
     }
   }
   
@@ -153,10 +154,21 @@ class Server {
     
     foreach ($this->connections as $key => &$connection) {
       if (!$connection->isValid()) {
+        
+        $address = \array_search($key, $this->connectionsAddressMap);
+        if ($address) {
+          $this->connectionsAddressMap[$address] = NULL;
+        }
+        
+        // TODO Fire unexpected client disconnect.
         $connection = NULL;
+        
         if (DEBUG) {
           $this->logger->debug("Remove connection: $key");
         }
+        
+        // Finally, notify listener.
+        call_user_func($this->listenerDisconnected, $key);
       }
     }
     
@@ -166,6 +178,7 @@ class Server {
     
     // Remove NULL elements from the list.
     $this->connections = array_filter($this->connections);
+    $this->connectionsAddressMap = array_filter($this->connectionsAddressMap);
     $this->connectionCleanupLast = \time();
     
     if (DEBUG) {
@@ -203,6 +216,47 @@ class Server {
       $this->logger->info("Bound to socket: $this->socketUrl");
     }
   }
+  
+  /**
+   * Runs network server loop.
+   */
+  public function run() {
+    $this->accept();
+    
+    // Move bytes between the OS network buffers and connection class buffers.
+    foreach ($this->connections as $key => $connection) {
+      $connection->receive()
+      ->send();
+    }
+    
+    $this->cleanup();
+  }
+  
+  /**
+   * Close a connection by key.
+   *
+   * @param string $key
+   */
+  public function close($key) : void {
+    if (isset($this->connections[$key])) {
+      if (DEBUG) {
+        $this->logger->debug("Close connection: $key");
+      }
+    } elseif (DEBUG) {
+      $this->logger->debug("Cannot close connection. Key not found: $key");
+    }
+  }
+  
+  public function setListenerConnected($callback) {
+    $this->listenerConnected = $callback;
+  }
+  
+  public function setListenerDisconnected($callback) {
+    $this->listenerDisconnected = $callback;
+  }
+  
+  // Only the Game class handles events. No need to make it generic.
+  // public function removeListener(string $event, $callback) {}
   
   /**
    * Set shutdown message.

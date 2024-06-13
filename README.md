@@ -20,6 +20,8 @@ Overview of the components involved.
 2. Can be ported to C/C++.
 3. What is the most important thing to concentrate on? Project Goals?
 
+Prefer unsigned integer ids over UUIDs or other strings. Use UUIDs only for objects that need to be shared in a database or across application services.
+
 # SMP
 
 Simple MUD in PHP.
@@ -93,19 +95,9 @@ There are 2 outgoing events:
 	- Logout (graceful connection closure)
 	- Output
 
-Communication with the game engine.
-	- Event/callbacks? Send to and from controller entity buffers?
-	- Bulk operations - IO on a buffer map/queue/etc data structure?
-	- ~Directly attach connection to control entity? Not optimizing yet so can be decoupled.~
-		- This is not a good idea. Why not?
+The network server will use events to notify registered handlers of connection state changes. Input/output are simpler operations that have only two properties (connection id and bytes). They don't need to be wrapped in an event object.
 
-Translating input (abstract) to game commands?
-	- No idea about terms? Is it translations? Bridge design pattern?
-	- What will control the game entities?
-
-Above mentions game commands (as class/objects). Commands seem heavy, as opposed to simply calling entity/controller methods.
-
-What class should be responsible for the user/network connection map? Should it be the network Server or some intermediate class? Definitely not in the User Manager. ~But why not?~ (Really, old me? Because the user manages users and should have one purpose.)
+Have clients be identified by numeric ids, as opposed to some remote address strings.
 
 ## Game World
 

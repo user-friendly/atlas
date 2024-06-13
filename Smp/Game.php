@@ -64,12 +64,12 @@ class Game {
     // Initialize & start listening for connections.
     $this->server = new Network\Server($this->process);
     
+    $this->server->setListenerConnected(array($this, 'handleClientConnected'));
+    $this->server->setListenerDisconnected(array($this, 'handleClientDisconnected'));
+    
     $this->logger->debug("Start main game loop.");
     while ($this->run) {
-      // Process network messages.
-      foreach($this->server->run() as $address => $connection) {
-        // TODO Do the communications with the reset of the game here.
-      }
+      $this->server->run();
       
       $this->process->yield();
     }
@@ -79,6 +79,18 @@ class Game {
 
     $this->logger->debug("Shutdown complete.");
     return $this::EXIT_SUCCESS;
+  }
+  
+  public function handleClientConnected($key) {
+    if (DEBUG) {
+      $this->logger->debug("New user connected, client id: $key");
+    }
+  }
+  
+  public function handleClientDisconnected($key) {
+    if (DEBUG) {
+      $this->logger->debug("User disconnected, client id: $key");
+    }
   }
   
   /**
