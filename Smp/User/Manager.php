@@ -12,6 +12,8 @@ use Smp\Logger\LoggerFactory;
 class Manager {
   use LoggerTrait;
   
+  const TEMP_USERNAME = "anonymous";
+  
   /**
    * A map of users.
    * 
@@ -84,6 +86,18 @@ class Manager {
     }
     $this->logger->error("User id already present in DB: {$new_uid}");
     return FALSE;
+  }
+  
+  /**
+   * Create a temporary user.
+   * 
+   * @return \Smp\User\User
+   */
+  public function createTempUser() {
+    do {
+      $anon_user = $this->create($this::TEMP_USERNAME, NULL);
+    } while (!$anon_user);
+    return $anon_user;
   }
   
   /**

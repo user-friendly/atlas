@@ -13,6 +13,7 @@ if (!defined("DEBUG")) {
 
 use Smp\Logger\LoggerFactory;
 use Smp\Logger\LoggerTrait;
+use Smp\User\Manager as UserManager;
 
 /**
  * Game class.
@@ -46,6 +47,8 @@ class Game {
    */
   protected $server = NULL;
   
+  protected $users = NULL;
+  
   /**
    * Maps network clients to users.
    * 
@@ -61,6 +64,8 @@ class Game {
     
     $this->process = new Process();
     $this->process->addSignalHandler([$this, "signalShutdown"]);
+    
+    $this->users = new UserManager();
   }
   
   /**
@@ -75,11 +80,9 @@ class Game {
     $this->server->setListenerConnected(array($this, 'handleClientConnected'));
     $this->server->setListenerDisconnected(array($this, 'handleClientDisconnected'));
     
-    $tmp_messageInterval = 5;
-    $tmp_messageLast = Utility::getTime();
-    
     $this->logger->debug("Start main game loop.");
     while ($this->run) {
+      // Accept new connections, receive & send, cleanup disconnected clients (once every N seconds).
       $this->server->run();
       
       if (0 < count($this->clientMap)) {
@@ -89,13 +92,10 @@ class Game {
           }
         }
         
-        if (Utility::getTime() > $tmp_messageLast + $tmp_messageInterval) {
-          // FIXME Test method.
-          foreach ($this->clientMap as $key => $uid) {
-            $this->server->output($key, "This is a test message. Your user id is: {$uid}\n" );
-          }
-          $tmp_messageLast = Utility::getTime();
-        }
+        // FIXME Remove debug code.
+//         foreach ($this->clientMap as $key => $uid) {
+//           $this->server->output($key, "This is a test message. Your user id is: {$uid}\n" );
+//         }
       }
       
       $this->process->yield();
@@ -118,8 +118,9 @@ class Game {
       throw new \RuntimeException("Client already present in user map: {$key}");
     }
     
-    // FIXME Tie in with the user system.
-    $this->clientMap[$key] = $key;
+    $anon_user = $this->users->createTempUser();
+    
+    $this->clientMap[$key] = $anon_user->getId();
   }
   
   public function handleClientDisconnected($key) {
@@ -133,6 +134,8 @@ class Game {
       //      If the client disconnected (for whatever reason) before being removed
       //      from the map, this would indicated a forced disconnection.
     }
+    
+    $this->users->delete($this->clientMap[$key]);
     
     // Finally, remove the map entry.
     unset($this->clientMap[$key]);
