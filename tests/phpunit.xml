@@ -14,9 +14,14 @@
          colors="true"
          testdox="true"
 	>
+	<php>
+		<const name="DEBUG" value="TRUE"/>
+	</php>
+	
     <testsuites>
         <testsuite name="default">
             <directory>./</directory>
+            <exclude>./Simple</exclude>
             <exclude>./BaseTest.php</exclude>
             <exclude>./Deprecated</exclude>
             <exclude>./Logger.php</exclude>
