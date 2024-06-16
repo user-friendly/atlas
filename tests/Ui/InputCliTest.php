@@ -59,8 +59,48 @@ final class InputCliTest extends BaseTest {
   /**
    * Tests valid user input only.
    */
-  #[DataProvider('userInputValidProvider')]
-  public function testUserInputValid($input) : void {
-    throw new \Exception("TODO Implement test.");
+  // #[DataProvider('userInputValidProvider')]
+  public function testUserInputValid(/* $input */) : void {
+    $inputCli = new InputCli();
+    
+    $e = \chr(0x07);
+    
+    $input = "test \"arg1\" arg2;cmd2 'asdf'\ncmd3 `lkjsdf sd      \tsdf`";
+    $input = ";;\n;\ncmd1 \"arg1 \t arg1.5\" arg2 `arg3` arg4 arg5' \t\t some weird arg is #5 \t  'extra \t\t  ";
+    $input .= 'arg6\\"\\\'\\ ' . "\\\tspace End   \t\t    ";
+    $input .= "\ncmd2 arg21;cmd3 arg31";
+    
+    $input = "klsdf'sfds sdf ds     ;  dsfdsfds';;;;;\n\n\n\n   \n\n\t\t\t\n\n\n;;;sdf;test;go backwards";
+    
+    $tokens = $inputCli->process($input);
+    
+    var_dump($tokens);
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

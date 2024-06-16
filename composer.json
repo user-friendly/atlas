@@ -23,7 +23,8 @@
 	"autoload" : {
 		"psr-4" : {
 			"Smp\\" : "Smp/",
-			"Smp\\tests\\" : "tests/"
+			"Smp\\tests\\" : "tests/",
+			"Smp\\scripts\\" : "scripts/"
 		}
 	}
 }
