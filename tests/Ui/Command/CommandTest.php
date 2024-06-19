@@ -89,6 +89,7 @@ final class CommandTest extends BaseTest {
     
     $this->assertIsArray($cmd_context, "Context is an array.");
     $this->assertArrayHasKey('user', $cmd_context, "Context has the `user` key.");
-    $this->assertEquals($user->id, $cmd_context['user']->id, "User's id is of the correct value.");
+    $this->assertEquals($user->id, $cmd_context["user"]->id, "User's id is of the correct value.");
+    $this->assertSame($user, $cmd_context["user"], "User object is correctly referenced.");
   }
 }

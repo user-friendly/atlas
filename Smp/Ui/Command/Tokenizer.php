@@ -237,7 +237,8 @@ class Tokenizer {
       $state = $stateNext;
     }
     
-    if ($state === self::STATE_TOKEN || $state === self::STATE_NEW || $state === self::STATE_COMMAND) {
+    if ($state === self::STATE_TOKEN || $state === self::STATE_NEW
+        || $state === self::STATE_COMMAND || $state === self::STATE_WHITESPACE) {
       // Make sure to complete tokens and add the last command.
       if (\strlen($token)) {
         $tokens[] = $token;
