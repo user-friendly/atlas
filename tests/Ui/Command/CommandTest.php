@@ -5,7 +5,7 @@
  * CommandTest class file.
  */
 
-namespace Smp\tests\Ui;
+namespace Smp\tests\Ui\Command;
 
 use Smp\tests\BaseTest;
 
