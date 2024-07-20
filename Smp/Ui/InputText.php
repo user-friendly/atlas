@@ -11,9 +11,9 @@ use Smp\Logger\LoggerTrait;
 use Smp\Logger\LoggerFactory;
 
 /**
- * Command line interface input handler.
+ * Text input handler.
  */
-class InputCli {
+class InputText {
   use LoggerTrait;
   
   

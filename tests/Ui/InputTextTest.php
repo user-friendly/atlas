@@ -13,12 +13,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversFunction;
 use PHPUnit\Framework\Attributes\DataProvider;
 
-use Smp\Ui\InputCli;
+use Smp\Ui\InputText;
 
-#[CoversClass(InputCli::class)]
+#[CoversClass(InputText::class)]
 #[CoversFunction('process')]
 #[CoversFunction('getResult')]
-final class InputCliTest extends BaseTest {
+final class InputTextTest extends BaseTest {
   
   /**
    * Provides valid user input test data.
