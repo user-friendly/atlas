@@ -8,6 +8,13 @@ namespace Smp\Network;
 
 use Smp\Logger\LoggerTrait;
 
+/**
+ * Server class.
+ * 
+ * FIXME Re-examine the cleanup and when the disconnection event handler is fired.
+ *       The notification is triggered during the cleanup op, and the cleanup op is
+ *       done once every N number of seconds (5?).
+ */
 class Server {
   use LoggerTrait;
   
@@ -141,7 +148,7 @@ class Server {
       $this->stats['client_connections']++;
       
       // Finally, notify listener.
-      call_user_func($this->listenerConnected, $key);
+      \call_user_func($this->listenerConnected, $key);
     }
   }
   
@@ -165,7 +172,6 @@ class Server {
           $this->connectionsAddressMap[$address] = NULL;
         }
         
-        // TODO Fire unexpected client disconnect.
         $connection = NULL;
         
         if (DEBUG) {
@@ -173,12 +179,12 @@ class Server {
         }
         
         // Finally, notify listener.
-        call_user_func($this->listenerDisconnected, $key);
+        \call_user_func($this->listenerDisconnected, $key);
       }
     }
     
     if (DEBUG) {
-      $old_count = count($this->connections);
+      $old_count = \count($this->connections);
     }
     
     // Remove NULL elements from the list.
@@ -187,7 +193,7 @@ class Server {
     $this->connectionCleanupLast = \time();
     
     if (DEBUG) {
-      $new_count = count($this->connections);
+      $new_count = \count($this->connections);
       $diff = $old_count - $new_count;
       if ($diff) {
         $this->logger->info("Clients cleaned up $diff");
@@ -196,9 +202,6 @@ class Server {
   }
   
   protected function listen() : void {
-    // TODO Should this method not part of the Connection class?
-    //      Static method or not?
-    
     // Old trick cowboys use.
     if (\file_exists($this->socketPath)  && !\unlink($this->socketPath)) {
       throw new \RuntimeException("Failed to bind - could not remove existing socket $this->socketPath.");
