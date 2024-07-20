@@ -133,7 +133,7 @@ class Connection {
         $this->send();
       }
     }
-    return $this->fclose();
+    return \fclose($this->stream);
   }
   
   /**
@@ -313,7 +313,6 @@ class Connection {
    * Do not use this method to send data unless you know what you're doing.
    *
    * @see \fread()
-   * @see Connection::fread()
    *
    * @param int $size
    * @throws \RuntimeException
@@ -321,11 +320,11 @@ class Connection {
    *   Returned binary data.
    */
   protected function readSome(int $size = 1500) : string {
-    $binary = $this->fread($size);
+    $binary = \fread($this->stream, $size);
     if ($binary === FALSE) {
       $error = \error_get_last();
       \error_clear_last();
-      $this->fclose();
+      \fclose($this->stream);
       throw new \RuntimeException($error['message'] ? $error['message'] : 'Unknown stream read error.');
     }
     // TODO In DEBUG mode, save byte count to stats
@@ -338,7 +337,6 @@ class Connection {
    * Do not use this method to send data unless you know what you're doing.
    *
    * @see \fwrite()
-   * @see Connection::fwrite()
    *
    * @param string $binary
    *   Bytes to be written, as a string or as an array of bytes.
@@ -348,61 +346,15 @@ class Connection {
    *   Number of bytes written.
    */
   protected function sendSome(string $binary) : int {
-    $bytes_written = $this->fwrite($binary);
+    $bytes_written = \fwrite($this->stream, $binary);
     if (\strlen($binary) !== $bytes_written) {
       $error = \error_get_last();
       \error_clear_last();
-      $this->fclose();
+      \fclose($this->stream);
       throw new \RuntimeException($error['message'] ? $error['message'] : 'Unknown stream write error.');
     }
     // TODO In DEBUG mode, save byte count to stats
     return $bytes_written;
-  }
-  
-  /**
-   * Binary-safe stream read.
-   *
-   * @see \fread()
-   *
-   * @param int $size
-   * @return string
-   */
-  protected function fread(int $size = 1500) : string {
-    return \fread($this->stream, $size);
-  }
-  
-  /**
-   * Binary-safe stream write.
-   *
-   * @see \fwrite()
-   *
-   * @param string $binary
-   * @return number|bool
-   */
-  protected function fwrite(string $binary) {
-    return \fwrite($this->stream, $binary, \strlen($binary));
-  }
-  
-  /**
-   * Checks whether the stream reached EOF.
-   * 
-   * @see \feof()
-   * 
-   * @return boolean
-   */
-  protected function feof() {
-    return \feof($this->stream);
-  }
-  
-  /**
-   * Closes the stream.
-   * 
-   * @see \fclose()
-   * 
-   * @return boolean
-   */
-  protected function fclose() {
-    return \fclose($this->stream);
   }
 
   protected function setBlockMode(bool $blocking) : self {
