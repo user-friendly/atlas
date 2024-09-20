@@ -14,6 +14,9 @@ use Smp\Logger\LoggerTrait;
  * FIXME Re-examine the cleanup and when the disconnection event handler is fired.
  *       The notification is triggered during the cleanup op, and the cleanup op is
  *       done once every N number of seconds (5?).
+ * 
+ * NOTE Server connection consume chunks of data, up to (default) 1 KB.
+ *      The command/logical handing of raw data should consider that.
  */
 class Server {
   use LoggerTrait;
