@@ -12,6 +12,8 @@ use Smp\Logger\LoggerFactory;
 
 /**
  * TODO Describe the input syntax and what exactly it outputs.
+ * FIXME Not closing quotes does not produce an error.
+ *       It should be considered invalid input.
  */
 class Tokenizer {
   use LoggerTrait;

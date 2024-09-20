@@ -71,9 +71,10 @@ trait TokenizerTestData {
   }
   
   public static function userInputInvalidProvider() : array {
-    return [
+    $inputs = [
       0, 1, -1, 1.5, [], new \stdClass(),
       "\'", "\"", "  \'  ", "  \"  ", "\t\t\'\t\t", "\t\t\"\t\t",
     ];
+    return \array_map(fn(mixed $input) => [$input], $inputs);
   }
 }

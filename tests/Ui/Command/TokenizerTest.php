@@ -34,4 +34,12 @@ final class TokenizerTest extends BaseTest {
     
     $this->assertEquals($expected, $tokens, "Tokenized commands match expected value.");
   }
+  
+  /**
+   * Tests invalid user input only.
+   */
+  #[DataProvider('userInputInvalidProvider')]
+  public function testUserInputInvalid($input) : void {
+    throw new \Exception('TODO Implement invalid input tests.');
+  }
 }
