@@ -41,6 +41,9 @@ trait TokenizerTestData {
       "\t;\t" => [],
       
       "look" => [["look"]],
+      "look\n" => [["look"]],
+      "look\r\n" => [["look"]],
+      
       "   look   " => [["look"]],
       "\t\t\tlook\t\t\t" => [["look"]],
       "look west" => [["look", "west"]],
@@ -51,6 +54,9 @@ trait TokenizerTestData {
       "setname 'Sir Testalot'" => [["setname", "Sir Testalot"]],
       
       "look;west" => [["look"], ["west"]],
+      "look\nwest" => [["look"], ["west"]],
+      "look\r\nwest" => [["look"], ["west"]],
+      
       "look;west;attack" => [["look"], ["west"], ["attack"]],
       "look;west;attack all" => [["look"], ["west"], ["attack", "all"]],
       "go up;look at \"statue of Gorlok\"" => [["go", "up"], ["look", "at", "statue of Gorlok"]],

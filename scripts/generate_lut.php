@@ -36,7 +36,7 @@ echo "Quotes characters: ";
 echo print_array_map(fn($c) => $c === "\"" || $c === "'" || $c === "`");
 
 echo "Whitespace characters:";
-echo print_array_map(fn($c) => $c === " " || $c === "\t");
+echo print_array_map(fn($c) => $c === " " || $c === "\t" || $c === "\r");
 
 echo "Printable characters: ";
 echo print_array_map("ctype_graph");
