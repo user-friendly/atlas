@@ -20,6 +20,10 @@ Run simple test script (non-PHPUnit):
 
 `sh test Simple\\Fibers`
 
+Enable xDebug for a given test run, pass `xdebug` as the first argument:
+
+`sh test xdebug Ui/Command/TokenizerTest.php`
+
 # TELNET NOTES
 
 hex => decimal => char
