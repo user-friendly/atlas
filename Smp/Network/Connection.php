@@ -102,6 +102,9 @@ class Connection {
     $this->setTimeout($timeout);
     $this->setReadSize($readSize);
     $this->setWriteSize($writeSize);
+    
+    // TODO Read more about the TCP Nagle algorithm. It is enabled by default.
+    // \stream_context_set_option($stream, 'socket', 'tcp_nodelay', TRUE);
 
     $this->remoteName = @\stream_socket_get_name($this->stream, TRUE);
     
