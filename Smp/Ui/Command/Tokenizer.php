@@ -10,6 +10,9 @@ namespace Smp\Ui\Command;
 use Smp\Logger\LoggerTrait;
 use Smp\Logger\LoggerFactory;
 
+/**
+ * TODO Describe the input syntax and what exactly it outputs.
+ */
 class Tokenizer {
   use LoggerTrait;
   
