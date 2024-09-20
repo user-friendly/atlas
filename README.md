@@ -2,6 +2,24 @@
 
 SMP is a simple MUD engine, using PHP.
 
+# Program Execution
+
+Starting the game server:
+
+`sh daemon`
+
+Run PHPUnit test suite: 
+
+`sh test`
+
+Run a specific case:
+
+`sh test Ui/Command/TokenizerTest.php`
+
+Run simple test script (non-PHPUnit):
+
+`sh test Simple\\Fibers`
+
 # TELNET NOTES
 
 hex => decimal => char
