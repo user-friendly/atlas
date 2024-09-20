@@ -33,7 +33,7 @@ echo "Newline characters: ";
 echo print_array_map(fn($c) => $c === "\n" || $c === ";");
 
 echo "Quotes characters: ";
-echo print_array_map(fn($c) => $c === "\"" || $c === "'" || $c === "`");
+echo print_array_map(fn($c) => $c === "\"" /* || $c === "'" || $c === "`" */);
 
 echo "Whitespace characters:";
 echo print_array_map(fn($c) => $c === " " || $c === "\t" || $c === "\r");
