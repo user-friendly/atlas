@@ -118,6 +118,10 @@ final class ManagerTest extends BaseTest {
     $this->assertSame("456", $manager->getPass($new_user->getId()), "Returned updated user has the correct password.");
     $this->assertSame($context, $new_user->getContext(), "Updated user has the correct context.");
   }
+  
+  public function testTempUser() {
+    $this->assertSame(TRUE, FALSE, "TRUE is equal to TRUE.");
+  }
 }
 
 

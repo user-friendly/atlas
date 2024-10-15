@@ -152,12 +152,12 @@ class Connection {
     if (\strlen($read_buff)) {
       $this->readBuffer .= $read_buff;
       
-//       if (DEBUG) {
-//         $sz = \strlen($read_buff);
-//         $hex = \bin2hex($read_buff);
-//         $this->logger->debug("{$this->remoteName} received {$sz} bytes: {$hex}");
-//         $this->logger->debug("{$this->remoteName}: \n{$read_buff}");
-//       }
+      if (DEBUG) {
+        $sz = \strlen($read_buff);
+        $hex = \bin2hex($read_buff);
+        $this->logger->debug("{$this->remoteName} received {$sz} bytes: {$hex}");
+        $this->logger->debug("{$this->remoteName}: \n{$read_buff}");
+      }
     }
     return $this;
   }

@@ -14,6 +14,7 @@ if (!defined("DEBUG")) {
 use Smp\Logger\LoggerFactory;
 use Smp\Logger\LoggerTrait;
 use Smp\User\Manager as UserManager;
+use Smp\Ui\InputText;
 
 // TODO Add timeout for users. After a certain period of inactivity, kick the user.
 
@@ -82,6 +83,11 @@ class Game {
     $this->server->setListenerConnected(array($this, 'handleClientConnected'));
     $this->server->setListenerDisconnected(array($this, 'handleClientDisconnected'));
     
+    $textUi = new InputText();
+    
+    // FIXME Test code - remove it.
+    $commands = [];
+    
     $this->logger->debug("Start main game loop.");
     while ($this->run) {
       // Accept new connections, receive & send, cleanup disconnected clients (once every N seconds).
@@ -89,9 +95,14 @@ class Game {
       
       if (0 < count($this->clientMap)) {
         foreach ($this->server->input() as $key => $input) {
+          $input_tokens = $textUi->processVariableInput($input);
+          
           if (DEBUG) {
-            $this->logger->debug("User [$key] input: {$input}");
+            $this->logger->debug("User [$key] input tokens: ");
+            var_dump($input_tokens);
           }
+          
+          
         }
         
         // FIXME Remove debug code.
