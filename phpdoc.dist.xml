@@ -4,7 +4,7 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="https://www.phpdoc.org"
 >
-    <title>phpDocumentor</title>
+    <title>Simple MUD in PHP</title>
     <paths>
         <output>doc/</output>
         <cache>doc/.cache</cache>
