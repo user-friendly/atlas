@@ -123,7 +123,7 @@ class Manager {
     }
     // Validate user exists.
     $update_user = $this->get($uid);
-    if (!$this->get($user)) {
+    if (!$update_user) {
       $this->logger->error("User not found in DB: {$uid}@{$update_user->getUsername()}.");
       return FALSE;
     }

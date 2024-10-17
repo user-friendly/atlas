@@ -7,6 +7,7 @@
 namespace Smp\tests\User;
 
 use Smp\User\Manager;
+use Smp\User\User;
 
 use Smp\tests\BaseTest;
 
@@ -101,6 +102,7 @@ final class ManagerTest extends BaseTest {
     $new_user = $manager->update($user->getId(), "user2", "456", $context);
     
     $this->assertIsObject($new_user, "Returned updated user is an object.");
+    $this->assertInstanceOf(User::class, $new_user, "Returned updated user is correct class.");
     $this->assertNotEquals($new_user, $user, "Returned updated user is not the same object as the old user.");
     $this->assertSame($user->getId(), $new_user->getId(), "Returned updated user has the correct id.");
     $this->assertSame("user2", $new_user->getUsername(), "Returned updated user has the correct username.");
@@ -112,6 +114,7 @@ final class ManagerTest extends BaseTest {
     $new_user = $manager->get(1);
     
     $this->assertIsObject($new_user, "Updated user is an object.");
+    $this->assertInstanceOf(User::class, $new_user, "Updated user is correct class.");
     $this->assertNotEquals($new_user, $user, "Updated user is not the same object as the old user.");
     $this->assertSame($user->getId(), $new_user->getId(), "Updated user has the correct id.");
     $this->assertSame("user2", $new_user->getUsername(), "Updated user has the correct username.");
@@ -120,31 +123,28 @@ final class ManagerTest extends BaseTest {
   }
   
   public function testTempUser() {
-    $this->assertSame(TRUE, FALSE, "TRUE is equal to TRUE.");
+    $manager = new Manager();
+    
+    $new_user_context = [
+      'was_anonymous' => TRUE,
+      'anonymous_conversion_time' => \time(),
+    ];
+    
+    $temp_user = $manager->createTempUser();
+    
+    $this->assertIsObject($temp_user, "Temp user is an object.");
+    $this->assertInstanceOf(User::class, $temp_user, "Temp user is correct class.");
+    $this->assertSame("anonymous", $temp_user->getUsername(), "Temp user has the correct username.");
+    
+    // Upgrade to regular user.
+    $new_user = $manager->update($temp_user, "johndoe123", "321", $new_user_context);
+    
+    $this->assertIsObject($new_user, "Converted user is an object.");
+    $this->assertInstanceOf(User::class, $new_user, "Converted user is correct class.");
+    $this->assertNotEquals($new_user, $temp_user, "Converted user is not the same object as the old user.");
+    $this->assertSame($new_user->getId(), $temp_user->getId(), "Converted user has the correct id.");
+    $this->assertSame("johndoe123", $new_user->getUsername(), "Converted user has the correct username.");
+    $this->assertSame("321", $manager->getPass($new_user->getId()), "Converted user has the correct password.");
+    $this->assertSame($new_user_context, $new_user->getContext(), "Converted user has the correct context.");
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

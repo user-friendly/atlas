@@ -88,27 +88,54 @@ class Game {
     // FIXME Test code - remove it.
     $commands = [];
     
+    $broadcast = [];
+    
     $this->logger->debug("Start main game loop.");
     while ($this->run) {
       // Accept new connections, receive & send, cleanup disconnected clients (once every N seconds).
       $this->server->run();
       
       if (0 < count($this->clientMap)) {
-        foreach ($this->server->input() as $key => $input) {
+        foreach ($this->server->input() as $net_id => $input) {
           $input_tokens = $textUi->processVariableInput($input);
           
-          if (DEBUG) {
-            $this->logger->debug("User [$key] input tokens: ");
-            var_dump($input_tokens);
+          if (empty($input_tokens)) {
+            continue;
           }
           
+          // TODO Can be initialized in handleClientConnected().
+          if (!isset($commands[$net_id])) {
+            $commands[$net_id] = [];
+          }
           
+          $commands[$net_id] = \array_merge($commands[$net_id], $input_tokens);
         }
         
-        // FIXME Remove debug code.
-//         foreach ($this->clientMap as $key => $uid) {
-//           $this->server->output($key, "This is a test message. Your user id is: {$uid}\n" );
-//         }
+        foreach ($commands as $net_id => &$cmd_fifo) {
+          $user = $this->users->get($this->clientMap[$net_id]);
+          
+          // Process user commands, up to a number.
+          $max = 4;
+          for ($i = 0; $i < $max && !empty($cmd_fifo); $i++) {
+            $cmd = \array_shift($cmd_fifo);
+            
+            if ($cmd[0] == 'say') {
+              $broadcast[] = "{$user->getId()}@{$user->getUsername()} says: " . \implode(' ', \array_slice($cmd, 1)) . "\n";
+            }
+            else {
+              $this->server->output($net_id, "No such command `$cmd[0]`.\n");
+            }
+          }
+        }
+        
+        if (!empty($broadcast)) {
+          while ($msg = \array_shift($broadcast)) {
+            foreach ($this->clientMap as $net_id => $uid) {
+              $this->server->output($net_id, $msg);
+            }
+          }
+        }
+        
       }
       
       $this->process->yield();
@@ -121,37 +148,37 @@ class Game {
     return $this::EXIT_SUCCESS;
   }
   
-  public function handleClientConnected($key) {
+  public function handleClientConnected($net_id) {
     if (DEBUG) {
-      $this->logger->debug("New user connected, client id: $key");
+      $this->logger->debug("New user connected, client id: $net_id");
     }
     
-    if (isset($this->clientMap[$key])) {
+    if (isset($this->clientMap[$net_id])) {
       // Hard fail here, this should never happen.
-      throw new \RuntimeException("Client already present in user map: {$key}");
+      throw new \RuntimeException("Client already present in user map: {$net_id}");
     }
     
     $anon_user = $this->users->createTempUser();
     
-    $this->clientMap[$key] = $anon_user->getId();
+    $this->clientMap[$net_id] = $anon_user->getId();
   }
   
-  public function handleClientDisconnected($key) {
+  public function handleClientDisconnected($net_id) {
     if (DEBUG) {
-      $this->logger->debug("User disconnected, client id: $key");
+      $this->logger->debug("User disconnected, client id: $net_id");
     }
     
-    if (isset($this->clientMap[$key])) {
-      $this->logger->warning("User's client unexpectedly disconnected, client id: $key");
+    if (isset($this->clientMap[$net_id])) {
+      $this->logger->warning("User's client unexpectedly disconnected, client id: $net_id");
       // TODO Some some user forced disconnect here, if user is present in the map.
       //      If the client disconnected (for whatever reason) before being removed
       //      from the map, this would indicated a forced disconnection.
     }
     
-    $this->users->delete($this->clientMap[$key]);
+    $this->users->delete($this->clientMap[$net_id]);
     
     // Finally, remove the map entry.
-    unset($this->clientMap[$key]);
+    unset($this->clientMap[$net_id]);
     
     if (DEBUG) {
       if (empty($this->clientMap)) {
