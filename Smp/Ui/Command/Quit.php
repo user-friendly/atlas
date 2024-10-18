@@ -8,6 +8,7 @@
 namespace Smp\Ui\Command;
 
 use Smp\Utility;
+use Smp\Game;
 
 /**
  * Quit command.
@@ -43,13 +44,21 @@ final class Quit extends Command {
    * @see \Smp\Ui\Command\Command::execute()
    */
   public function execute(): self {
-    if (isset($this->context['uid'])) {
-      throw new \RuntimeException("TODO Implement command.");
+    if (isset($this->context['uid']) && isset($this->context['game'])) {
+      /**
+       * @var Game $game
+       */
+      $game = $this->context['game'];
+      $uid = $this->context['uid'];
+      
+      // Do some cleanup and stuff... maybe even add a command or something.
+      
+      $game->getOutputUi()->println($uid, "Bye!");
+      $game->requestDisconnect($uid);
     }
     else {
-      $this->logger->error("User context is required, but was not found.");
+      $this->logger->error("User, & Game context is required, but was not found.");
     }
-    
     return $this;
   }
 

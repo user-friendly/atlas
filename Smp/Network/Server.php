@@ -176,7 +176,7 @@ class Server {
    */
   protected function cleanup($timeout = TRUE) : void {
     // FIXME Magic variable.
-    $max_ticks = 10;
+    $max_ticks = 3;
     // $ticks is ::run() cycles passed without any output.
     foreach ($this->connectionShutdown as $key => $ticks) {
       if ($this->connections[$key]->isValid() && $ticks > $max_ticks) {
@@ -333,12 +333,12 @@ class Server {
   public function close($key) : bool {
     if (isset($this->connections[$key])) {
       if (DEBUG) {
-        $this->logger->debug("Shutdown connection: $key");
+        $this->logger->debug("Close connection: $key");
       }
       return $this->connections[$key]->close(TRUE);
     }
     if (DEBUG) {
-      $this->logger->debug("Cannot Shutdown connection. Key not found: $key");
+      $this->logger->debug("Cannot close connection. Key not found: $key");
     }
     return FALSE;
   }

@@ -9,7 +9,7 @@ namespace Smp\User;
 use Smp\Logger\LoggerTrait;
 use Smp\Logger\LoggerFactory;
 
-class Manager {
+class Manager implements \Iterator {
   use LoggerTrait;
   
   const TEMP_USERNAME = "anonymous";
@@ -36,6 +36,9 @@ class Manager {
    * @var integer
    */
   protected $nextId = 0;
+  
+  // Used by the iterator impl.
+  private $position = 0;
   
   public function __construct() {
     LoggerFactory::init();
@@ -176,5 +179,25 @@ class Manager {
       return $this->usersPass[$uid];
     }
     return FALSE;
+  }
+  
+  final public function current() {
+    return \current($this->users);
+  }
+  
+  final public function key() {
+    return \key($this->users);
+  }
+  
+  final public function next() {
+    \next($this->users);
+  }
+  
+  final public function rewind() {
+    \reset($this->users);
+  }
+  
+  final public function valid() {
+    return \current($this->users);
   }
 }

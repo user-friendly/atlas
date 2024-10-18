@@ -52,7 +52,7 @@ Simple MUD in PHP.
 
 1. Basic RPG - no particular setting yet.
 2. Transient DB - everything is lost on restart.
-3. Multiplayer obviously.
+3. Multiplayer, aim to support 100+ players at one time.
 4. Concentrate more on software design.
 
 ## Renderer

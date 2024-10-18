@@ -19,6 +19,7 @@ use Smp\Ui\InputText;
 use Smp\Ui\OutputText;
 use Smp\Ui\Command\CommandQueue;
 use Smp\Ui\Command\Quit;
+use Smp\User\Manager;
 
 // TODO Add timeout for users. After a certain period of inactivity, kick the user.
 
@@ -54,6 +55,9 @@ class Game {
    */
   protected $server;
   
+  /**
+   * @var UserManager
+   */
   protected $users;
   
   protected $inputUi;
@@ -159,6 +163,8 @@ class Game {
                 'uid' => $uid,
                 // Entity id.
                 'eid' => NULL,
+                // Main app reference.
+                'game' => $this,
               ]);
               $this->commands->enqueue($command);
             }
@@ -176,24 +182,18 @@ class Game {
       // TODO Text batching of command execution.
       $max = 8;
       for ($cmds_executed = 0; $cmds_executed < $max && ($command = $this->commands->dequeue()); $cmds_executed++) {
+        $context = $command->getContext();
+        $uid = @$context['uid'];
         try {
           $command->execute();
+          if (DEBUG) {
+            $this->logger->debug("Command executed (uid $uid): {$command->getId()}");
+          }
         }
         catch (\Exception $e) {
-          $context = $command->getContext();
+          $this->logger->error("Error executing command '{$command->getId()}': {$e->getMessage()}");
           if (isset($context['uid'])) {
-            
-            if (DEBUG) {
-              $this->logger->debug("User ({$context['uid']}) executed command: {$command->getId()}");
-            }
-            
-            if ($command->getId() === Quit::id && isset($context['cid'])) {
-              $this->outputUi->println($context['uid'], "Bye!");
-              $this->server->disconnect($context['cid']);
-            }
-            else {
-              $this->outputUi->println($context['uid'], "Could not execute command: {$e->getMessage()}");
-            }
+            $this->outputUi->println($context['uid'], "Could not execute command: {$e->getMessage()}");
           }
         }
       }
@@ -218,6 +218,14 @@ class Game {
     return $this::EXIT_SUCCESS;
   }
   
+  public function getUsers() : Manager {
+    return $this->users;
+  }
+  
+  public function getOutputUi() : OutputText {
+    return $this->outputUi;
+  }
+  
   public function handleClientConnected($net_id) {
     if (DEBUG) {
       $this->logger->debug("New user connected, client id: $net_id");
@@ -239,6 +247,14 @@ class Game {
     $this->outputUi->println($anon_user->getId(), "");
     $this->outputUi->println($anon_user->getId(), "You can use the following commands: say, quit, rename.");
     $this->outputUi->println($anon_user->getId(), "");
+  }
+  
+  public function requestDisconnect($uid) : bool {
+    if (isset($this->userToClient[$uid])) {
+      $this->server->disconnect($this->userToClient[$uid]);
+      return TRUE;
+    }
+    return FALSE;
   }
   
   public function handleClientDisconnected($net_id) {
