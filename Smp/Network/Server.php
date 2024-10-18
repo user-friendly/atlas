@@ -14,6 +14,9 @@ use Smp\Logger\LoggerTrait;
  * FIXME Re-examine the cleanup and when the disconnection event handler is fired.
  *       The notification is triggered during the cleanup op, and the cleanup op is
  *       done once every N number of seconds (5?).
+ *       
+ * FIXME This whole class needs to be simplified and probably the conenctions class
+ *       can be integrated into this one.
  * 
  * NOTE Server connection consume chunks of data, up to (default) 1 KB.
  *      The command/logical handing of raw data should consider that.
@@ -83,6 +86,15 @@ class Server {
    * @var integer
    */
   protected $connectionTimeoutDefault = 60;
+  
+  /**
+   * Connection to disconnect.
+   * 
+   * Used for graceful disconnect.
+   * 
+   * @var array
+   */
+  protected $connectionShutdown = [];
   
   /**
    * Server statistics.
@@ -163,6 +175,16 @@ class Server {
    *   Set to FALSE to force a cleanup.
    */
   protected function cleanup($timeout = TRUE) : void {
+    // FIXME Magic variable.
+    $max_ticks = 10;
+    // $ticks is ::run() cycles passed without any output.
+    foreach ($this->connectionShutdown as $key => $ticks) {
+      if ($this->connections[$key]->isValid() && $ticks > $max_ticks) {
+        $this->close($key);
+        unset($this->connectionShutdown[$key]);
+      }
+    }    
+    
     if ($timeout && (\time() - $this->connectionCleanupLast < $this->connectionCleanupTime)) {
       return;
     }
@@ -174,6 +196,8 @@ class Server {
         if ($address) {
           $this->connectionsAddressMap[$address] = NULL;
         }
+        
+        unset($this->connectionShutdown[$key]);
         
         $connection = NULL;
         
@@ -240,8 +264,19 @@ class Server {
     
     // Move bytes between the OS network buffers and connection class buffers.
     foreach ($this->connections as $key => $connection) {
-      $connection->receive()
-      ->send();
+      // FIXME Could just move the connection to shutdown out of ::connections.
+      if (isset($this->connectionShutdown[$key])) {
+        if (0 == $connection->getSendSize()) {
+          $this->connectionShutdown[$key]++;
+        }
+        else {
+          $this->connectionShutdown[$key] = 1;
+        }
+      }
+      else {
+        $connection->receive();
+      }
+      $connection->send();
     }
     
     $this->cleanup();
@@ -249,6 +284,10 @@ class Server {
   
   public function input() {
     foreach ($this->connections as $key => $connection) {
+      // FIXME Could just move the connection to shutdown out of ::connections.
+      if (isset($this->connectionShutdown[$key])) {
+        continue;
+      }
       if ($input = $connection->consume()) {
         yield $key => $input;
       }
@@ -259,19 +298,49 @@ class Server {
     @$this->connections[$key]?->append($output);
   }
   
+  
   /**
-   * Close a connection by key.
+   * Gracefully disconnect a client.
+   * 
+   * The client might not be immediately disconnected, but after
+   * all output buffer has been flushed and on the next ::run().
+   * 
+   * @param string $key
+   * @return bool
+   *   True if the request was successful.
+   */
+  public function disconnect($key) : bool {
+    if (isset($this->connections[$key])) {
+      if (DEBUG) {
+        $this->logger->debug("Disconnect connection: $key");
+      }
+      $this->connectionShutdown[$key] = 1;
+      return TRUE;
+    }
+    if (DEBUG) {
+      $this->logger->debug("Cannot disconnect connection. Key not found: $key");
+    }
+    return FALSE;
+  }
+  
+  /**
+   * Shutdown a connection.
+   *
+   * Unlike diconnect(), closes stream immediately.
    *
    * @param string $key
    */
-  public function close($key) : void {
+  public function close($key) : bool {
     if (isset($this->connections[$key])) {
       if (DEBUG) {
-        $this->logger->debug("Close connection: $key");
+        $this->logger->debug("Shutdown connection: $key");
       }
-    } elseif (DEBUG) {
-      $this->logger->debug("Cannot close connection. Key not found: $key");
+      return $this->connections[$key]->close(TRUE);
     }
+    if (DEBUG) {
+      $this->logger->debug("Cannot Shutdown connection. Key not found: $key");
+    }
+    return FALSE;
   }
   
   public function setListenerConnected($callback) {

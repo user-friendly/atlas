@@ -164,6 +164,9 @@ class Game {
             }
             else {
               $this->outputUi->println($uid, "Command '{$tokens[0]}' not found.");
+              if (DEBUG) {
+                $this->logger->debug("User ($uid) executed an invalid command: {$tokens[0]}");
+              }
             }
           }
         }
@@ -171,28 +174,31 @@ class Game {
       
       // *** Handle UI inputs. ***
       // TODO Text batching of command execution.
-      $max = 4;
-      
-      for ($i = 0; $i < $max && ($command = $this->commands->dequeue()); $i++) {
+      $max = 8;
+      for ($cmds_executed = 0; $cmds_executed < $max && ($command = $this->commands->dequeue()); $cmds_executed++) {
         try {
           $command->execute();
         }
         catch (\Exception $e) {
           $context = $command->getContext();
           if (isset($context['uid'])) {
+            
+            if (DEBUG) {
+              $this->logger->debug("User ({$context['uid']}) executed command: {$command->getId()}");
+            }
+            
             if ($command->getId() === Quit::id && isset($context['cid'])) {
-              $this->server->output($context['cid'], "Bye!");
-              $this->server->close($context['cid']);
+              $this->outputUi->println($context['uid'], "Bye!");
+              $this->server->disconnect($context['cid']);
             }
             else {
               $this->outputUi->println($context['uid'], "Could not execute command: {$e->getMessage()}");
             }
           }
         }
-        
-        if (DEBUG) {
-          $this->logger->debug("Executed a batch of $max commands.");
-        }
+      }
+      if (DEBUG && $cmds_executed > 0) {
+        $this->logger->debug("Executed a batch of $cmds_executed commands.");
       }
       
       // *** Handle RAW OUTPUT ***
