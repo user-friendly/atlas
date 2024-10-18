@@ -1,6 +1,7 @@
 <?php
 /**
  * @file
+ * 
  * Program entry point.
  */
 
@@ -15,6 +16,9 @@ use Smp\Logger\LoggerFactory;
 use Smp\Logger\LoggerTrait;
 use Smp\User\Manager as UserManager;
 use Smp\Ui\InputText;
+use Smp\Ui\OutputText;
+use Smp\Ui\Command\CommandQueue;
+use Smp\Ui\Command\Quit;
 
 // TODO Add timeout for users. After a certain period of inactivity, kick the user.
 
@@ -26,7 +30,7 @@ use Smp\Ui\InputText;
 class Game {
   use LoggerTrait;
   
-  const VERSION = '1.0.0';
+  const VERSION = '1.0.0-alpha1';
   
   const EXIT_SUCCESS = 0;
   const EXIT_FAILURE = 1;
@@ -48,18 +52,50 @@ class Game {
    * 
    * @var Network\Server
    */
-  protected $server = NULL;
+  protected $server;
   
-  protected $users = NULL;
+  protected $users;
+  
+  protected $inputUi;
+  protected $outputUi;
+  
+  // FIXME Commands? Name is ambiguous.
+  protected $commands;
   
   /**
-   * Maps network clients to users.
+   * Maps network/game clients to users.
    * 
    * The key is the client id. Value is user id.
    * 
    * @var array
    */
-  protected $clientMap = [];
+  protected $clientToUser = [];
+  
+  /**
+   * Maps user to network/game clients.
+   *
+   * The key is the user id. Value is client id.
+   *
+   * @var array
+   */
+  protected $userToClient = [];
+  
+  protected function associateUserClient($uid, $cid) {
+    $this->userToClient[$uid] = $cid;
+    $this->clientToUser[$cid] = $uid;
+  }
+  
+  protected function removeUserClient($uid = NULL, $cid = NULL) {
+    if ($uid !== NULL) {
+      unset($this->clientToUser[$this->userToClient[$uid]]);
+      unset($this->userToClient[$uid]);
+      return;
+    }
+    if ($cid !== NULL) {
+      unset($this->userToClient[$this->clientToUser[$cid]]);
+      unset($this->clientToUser[$cid]);
+    }
+  }
   
   public function __construct() {
     LoggerFactory::init();
@@ -69,6 +105,12 @@ class Game {
     $this->process->addSignalHandler([$this, "signalShutdown"]);
     
     $this->users = new UserManager();
+    
+    $this->inputUi = new InputText();
+    $this->outputUi = new OutputText();
+    
+    // TODO Is this queue supposed to be here?
+    $this->commands = new CommandQueue();
   }
   
   /**
@@ -83,59 +125,81 @@ class Game {
     $this->server->setListenerConnected(array($this, 'handleClientConnected'));
     $this->server->setListenerDisconnected(array($this, 'handleClientDisconnected'));
     
-    $textUi = new InputText();
-    
-    // FIXME Test code - remove it.
-    $commands = [];
-    
-    $broadcast = [];
-    
     $this->logger->debug("Start main game loop.");
     while ($this->run) {
       // Accept new connections, receive & send, cleanup disconnected clients (once every N seconds).
       $this->server->run();
       
-      if (0 < count($this->clientMap)) {
-        foreach ($this->server->input() as $net_id => $input) {
-          $input_tokens = $textUi->processVariableInput($input);
+      // *** Handle RAW INPUT ***
+      if (0 < count($this->clientToUser)) {
+        foreach ($this->server->input() as $cid => $input) {
           
-          if (empty($input_tokens)) {
+          $uid = $this->clientToUser[$cid];
+          $inputs = [];
+          
+          try {
+            $inputs = $this->inputUi->processInput($input);
+          } catch (\Exception $e) {
+            $this->logger->error("Failed to process input from user (client id $cid, user id: $uid).", ['exceptoin' => $e]);
             continue;
           }
           
-          // TODO Can be initialized in handleClientConnected().
-          if (!isset($commands[$net_id])) {
-            $commands[$net_id] = [];
+          if (empty($inputs)) {
+            // Prints the prompt.
+            $this->outputUi->print($uid);
+            continue;
           }
           
-          $commands[$net_id] = \array_merge($commands[$net_id], $input_tokens);
-        }
-        
-        foreach ($commands as $net_id => &$cmd_fifo) {
-          $user = $this->users->get($this->clientMap[$net_id]);
-          
-          // Process user commands, up to a number.
-          $max = 4;
-          for ($i = 0; $i < $max && !empty($cmd_fifo); $i++) {
-            $cmd = \array_shift($cmd_fifo);
-            
-            if ($cmd[0] == 'say') {
-              $broadcast[] = "{$user->getId()}@{$user->getUsername()} says: " . \implode(' ', \array_slice($cmd, 1)) . "\n";
+          foreach ($inputs as $tokens) {
+            if ($command = $this->inputUi->processCommand($tokens)) {
+              $command->setContext([
+                // Client id.
+                'cid' => $cid,
+                // User id.
+                'uid' => $uid,
+                // Entity id.
+                'eid' => NULL,
+              ]);
+              $this->commands->enqueue($command);
             }
             else {
-              $this->server->output($net_id, "No such command `$cmd[0]`.\n");
+              $this->outputUi->println($uid, "Command '{$tokens[0]}' not found.");
+            }
+          }
+        }
+      }
+      
+      // *** Handle UI inputs. ***
+      // TODO Text batching of command execution.
+      $max = 4;
+      
+      for ($i = 0; $i < $max && ($command = $this->commands->dequeue()); $i++) {
+        try {
+          $command->execute();
+        }
+        catch (\Exception $e) {
+          $context = $command->getContext();
+          if (isset($context['uid'])) {
+            if ($command->getId() === Quit::id && isset($context['cid'])) {
+              $this->server->output($context['cid'], "Bye!");
+              $this->server->close($context['cid']);
+            }
+            else {
+              $this->outputUi->println($context['uid'], "Could not execute command: {$e->getMessage()}");
             }
           }
         }
         
-        if (!empty($broadcast)) {
-          while ($msg = \array_shift($broadcast)) {
-            foreach ($this->clientMap as $net_id => $uid) {
-              $this->server->output($net_id, $msg);
-            }
-          }
+        if (DEBUG) {
+          $this->logger->debug("Executed a batch of $max commands.");
         }
-        
+      }
+      
+      // *** Handle RAW OUTPUT ***
+      if (0 < count($this->userToClient)) {
+        foreach ($this->outputUi->processOutput() as $uid => $text) {
+          $this->server->output($this->userToClient[$uid], $text);
+        }
       }
       
       $this->process->yield();
@@ -143,7 +207,7 @@ class Game {
     
     // Graceful shutdown.
     $this->server->shutdown();
-
+    
     $this->logger->debug("Shutdown complete.");
     return $this::EXIT_SUCCESS;
   }
@@ -153,14 +217,22 @@ class Game {
       $this->logger->debug("New user connected, client id: $net_id");
     }
     
-    if (isset($this->clientMap[$net_id])) {
+    if (isset($this->clientToUser[$net_id])) {
       // Hard fail here, this should never happen.
       throw new \RuntimeException("Client already present in user map: {$net_id}");
     }
     
+    // Create a temporary user.
     $anon_user = $this->users->createTempUser();
     
-    $this->clientMap[$net_id] = $anon_user->getId();
+    // Link user to client.
+    $this->associateUserClient($anon_user->getId(), $net_id);
+    
+    // FIXM Convert to some sort of a command/game event?
+    $this->outputUi->println($anon_user->getId(), "Welcome to SMP!");
+    $this->outputUi->println($anon_user->getId(), "");
+    $this->outputUi->println($anon_user->getId(), "You can use the following commands: say, quit, rename.");
+    $this->outputUi->println($anon_user->getId(), "");
   }
   
   public function handleClientDisconnected($net_id) {
@@ -168,20 +240,24 @@ class Game {
       $this->logger->debug("User disconnected, client id: $net_id");
     }
     
-    if (isset($this->clientMap[$net_id])) {
+    if (isset($this->clientToUser[$net_id])) {
       $this->logger->warning("User's client unexpectedly disconnected, client id: $net_id");
       // TODO Some some user forced disconnect here, if user is present in the map.
       //      If the client disconnected (for whatever reason) before being removed
       //      from the map, this would indicated a forced disconnection.
     }
     
-    $this->users->delete($this->clientMap[$net_id]);
+    // TODO So the user Manager is just an in-memory store, eh?
+    //      This operation should be moved somewhere else.
+    //      This class must only notify the rest of the engine
+    //      of the client closure event.
+    $this->users->delete($this->clientToUser[$net_id]);
     
-    // Finally, remove the map entry.
-    unset($this->clientMap[$net_id]);
+    // Dissociate user & client.
+    $this->removeUserClient(NULL, $net_id);
     
     if (DEBUG) {
-      if (empty($this->clientMap)) {
+      if (empty($this->clientToUser)) {
         $this->logger->debug("There are no more users connected to the server.");
       }
     }

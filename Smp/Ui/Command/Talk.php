@@ -42,13 +42,12 @@ final class Talk extends Command {
    * @see \Smp\Ui\Command\Command::execute()
    */
   public function execute(): self {
-    if (isset($this->context['user'])) {
+    if (isset($this->context['uid'])) {
       throw new \RuntimeException("TODO Implement command.");
     }
     else {
       $this->logger->error("User context is required, but was not found.");
     }
-    
     return $this;
   }
 }

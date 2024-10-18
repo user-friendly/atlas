@@ -35,7 +35,7 @@ final class Rename extends Command {
    * @see \Smp\Ui\Command\Command::execute()
    */
   public function execute(): self {
-    if (isset($this->context['user'])) {
+    if (isset($this->context['uid'])) {
       throw new \RuntimeException("TODO Implement command.");
     }
     else {
