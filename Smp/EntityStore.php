@@ -32,11 +32,11 @@ interface EntityStore {
   /**
    * Read.
    * 
-   * @param Entity|int $entity
+   * @param Entity|int $id
    * @return Entity|FALSE
    *   FALSE if the entity was not found.
    */
-  public function get(int $entity) : Entity|FALSE;
+  public function get(int $id) : Entity|FALSE;
   
   /**
    * Update.
