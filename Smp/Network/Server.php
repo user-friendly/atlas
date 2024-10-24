@@ -197,16 +197,14 @@ class Server {
           $this->connectionsAddressMap[$address] = NULL;
         }
         
-        unset($this->connectionShutdown[$key]);
+        \call_user_func($this->listenerDisconnected, $key, isset($this->connectionShutdown[$key]));
         
+        unset($this->connectionShutdown[$key]);
         $connection = NULL;
         
         if (DEBUG) {
           $this->logger->debug("Remove connection: $key");
         }
-        
-        // Finally, notify listener.
-        \call_user_func($this->listenerDisconnected, $key);
       }
     }
     

@@ -267,16 +267,18 @@ class Game {
     return FALSE;
   }
   
-  public function handleClientDisconnected($net_id) {
+  public function handleClientDisconnected($net_id, $expected = FALSE) {
     if (DEBUG) {
       $this->logger->debug("User disconnected, client id: $net_id");
     }
     
-    if (isset($this->clientToUser[$net_id])) {
+    if (FALSE == $expected) {
       $this->logger->warning("User's client unexpectedly disconnected, client id: $net_id");
       // TODO Some some user forced disconnect here, if user is present in the map.
       //      If the client disconnected (for whatever reason) before being removed
       //      from the map, this would indicated a forced disconnection.
+      
+      // TODO Notify players?
     }
     
     // TODO So the user Manager is just an in-memory store, eh?
