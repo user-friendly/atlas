@@ -192,6 +192,9 @@ class Game {
         $context = $command->getContext();
         $uid = @$context['uid'];
         try {
+          // TODO Consider chains of commands. Instead of ::execute() returning $this,
+          //      have it return either a boolean or a new Command instance and
+          //      ::enqueue().
           $command->execute();
           if (DEBUG) {
             $this->logger->debug("Command executed (uid $uid): {$command->getId()}");
