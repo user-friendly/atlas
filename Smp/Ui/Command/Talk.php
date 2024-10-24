@@ -14,7 +14,8 @@ use Smp\Utility;
  * Talk command.
  * 
  * Context keys:
- *   'user': The user to perform the quit command on.
+ *   'uid':  User id. User associated with the command. User saying the thing.
+ *   'game': Game instance. API frontend for almost all things.
  */
 final class Talk extends Command {
   public const id = 'talk';
@@ -62,7 +63,7 @@ final class Talk extends Command {
       
       foreach ($game->getUsers() as $recipient_id => $user) {
         if ($uid != $recipient_id) {
-          $outputUi->println($recipient_id, "$name says '$text'");
+          $outputUi->println($recipient_id, "\n$name says '$text'");
         }
         else {
           $outputUi->println($recipient_id, "You say '$text'");

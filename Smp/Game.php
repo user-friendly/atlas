@@ -18,8 +18,9 @@ use Smp\User\Manager as UserManager;
 use Smp\Ui\InputText;
 use Smp\Ui\OutputText;
 use Smp\Ui\Command\CommandQueue;
-use Smp\Ui\Command\Quit;
 use Smp\User\Manager;
+use Smp\Ui\Command\Command;
+use Smp\Ui\Command\Message;
 
 // TODO Add timeout for users. After a certain period of inactivity, kick the user.
 
@@ -154,22 +155,28 @@ class Game {
             continue;
           }
           
+          $context = [
+            // Client id.
+            'cid' => $cid,
+            // User id.
+            'uid' => $uid,
+            // Entity id.
+            'eid' => NULL,
+            // Main app reference.
+            'game' => $this,
+          ];
+          
           foreach ($inputs as $tokens) {
             if ($command = $this->inputUi->processCommand($tokens)) {
-              $command->setContext([
-                // Client id.
-                'cid' => $cid,
-                // User id.
-                'uid' => $uid,
-                // Entity id.
-                'eid' => NULL,
-                // Main app reference.
-                'game' => $this,
-              ]);
+              $command->setContext($context);
               $this->commands->enqueue($command);
             }
             else {
-              $this->outputUi->println($uid, "Command '{$tokens[0]}' not found.");
+              $command = new Message();
+              $command->setContext(\array_merge($context, ['uid' => NULL, 'to_uids' => [$uid]]));
+              $command->setArguments(["Command '{$tokens[0]}' not found."]);
+              $this->commands->enqueue($command);
+              
               if (DEBUG) {
                 $this->logger->debug("User ($uid) executed an invalid command: {$tokens[0]}");
               }
