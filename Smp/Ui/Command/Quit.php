@@ -50,10 +50,23 @@ final class Quit extends Command {
        */
       $game = $this->context['game'];
       $uid = $this->context['uid'];
+      $boradcast = isset($this->context['broadcast']) ? $this->context['broadcast'] : TRUE;
       
       // Do some cleanup and stuff... maybe even add a command or something.
       
-      $game->getOutputUi()->println($uid, "Bye!");
+      // FIXME Return a messge command maybe? And have the broadcast flag there.
+      if ($boradcast) {
+        $outputUi = $game->getOutputUi();
+        $quitter = $game->getUsers()->get($uid)->getUsername();
+        foreach ($game->getUsers() as $recipient_id => $user) {
+          if ($uid == $recipient_id) {
+            $outputUi->println($recipient_id, "Bye! Hope to see you soon.");
+          }
+          else {
+            $outputUi->println($recipient_id, "\nPlayer {$quitter} has left this universe.");
+          }
+        }
+      }
       $game->requestDisconnect($uid);
     }
     else {
