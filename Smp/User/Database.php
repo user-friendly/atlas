@@ -7,6 +7,7 @@
 
 namespace Smp\User;
 
+use Countable;
 use Iterator;
 
 use Smp\Logger\LoggerTrait;
@@ -19,10 +20,13 @@ use Smp\EntityStore;
  * Stores users in memory and, in the future, syncs with
  * persistent storage.
  */
-class Database implements \Iterator, EntityStore {
+class Database implements \Iterator, Countable, EntityStore {
   use LoggerTrait;
   
-  protected User $users = [];
+  /**
+   * @var User[]
+   */
+  protected $users = [];
   
   /**
    * Class constructor.
@@ -42,6 +46,9 @@ class Database implements \Iterator, EntityStore {
    * 
    * It's expensive, but it will do for users.
    * 
+   * FIXME This will be a horrible bug if not all
+   *       users are loaded from persistent storage.
+   * 
    * @return int
    */
   public function getNextId() : int {
@@ -49,17 +56,20 @@ class Database implements \Iterator, EntityStore {
   }
   
   /**
-   * {@inheritDoc}
+   * Add user to the store.
+   * 
+   * @param User $entity
+   * 
    * @see \Smp\EntityStore::add()
    */
-  public function add(User $user): bool {
-    if (isset($this->users[$user->getId()])) {
-      $this->logger->error("User id already present in DB, id: {$user->getId()}");
+  public function add($entity): bool {
+    if (isset($this->users[$entity->getId()])) {
+      $this->logger->error("User id already present in DB, id: {$entity->getId()}");
       return FALSE;
     }
-    $this->users[$user->getId()] = $user;
+    $this->users[$entity->getId()] = $entity;
     
-    $this->logger->info("User added: `{$uid}@{$user->getUsername()}`.");
+    $this->logger->info("User added: `{$entity->getId()}@{$entity->getUsername()}`.");
     return TRUE;
   }
   
@@ -75,26 +85,30 @@ class Database implements \Iterator, EntityStore {
    * {@inheritDoc}
    * @see \Smp\EntityStore::delete()
    */
-  public function delete(User|int $user): bool {
-    $id = \is_object($user) ? $user->getId() : $user;
-    $user = $this->get($id);
+  public function delete(mixed $entity): bool {
+    $id = \is_object($entity) ? $entity->getId() : $entity;
+    $entity = $this->get($id);
     
-    if (FALSE === $user) {
+    if (FALSE === $entity) {
       $this->logger->error("Cannot delete, user not found, id: {$id}");
       return FALSE;
     }
     
     unset($this->users[$id]);
     
-    $this->logger->info("User deleted: `{$id}@{$user->getUsername()}`.");
+    $this->logger->info("User deleted: `{$id}@{$entity->getUsername()}`.");
     return TRUE;
   }
   
   /**
-   * {@inheritDoc}
+   * Update user in the store.
+   * 
+   * @param int $id
+   * @param User $entity
+   * 
    * @see \Smp\EntityStore::update()
    */
-  public function update(int $id, User $user): bool {
+  public function update(int $id, $entity): bool {
     $update = $this->get($id);
     
     if (FALSE === $update) {
@@ -102,17 +116,16 @@ class Database implements \Iterator, EntityStore {
       return FALSE;
     }
     
-    $update->setUsername($user->getUsername());
-    $update->setPassword($user->getPassword());
-    $update->setContext($user->getContext());
-    $update->setState($user->getState());
+    $update->setUsername($entity->getUsername());
+    $update->setPassword($entity->getPassword());
+    $update->setContext($entity->getContext());
+    $update->setState($entity->getState());
     
     $this->logger->info("User updated: `{$id}@{$update->getUsername()}`.");
+    return TRUE;
   }
   
   /**
-   * (non-PHPdoc)
-   *
    * @see Iterator::next()
    */
   public function next() : void {
@@ -120,17 +133,13 @@ class Database implements \Iterator, EntityStore {
   }
 
   /**
-   * (non-PHPdoc)
-   *
    * @see Iterator::valid()
    */
   public function valid() : bool {
-    return \current($this->users);
+    return FALSE !== \current($this->users);
   }
 
   /**
-   * (non-PHPdoc)
-   *
    * @see Iterator::current()
    */
   public function current() : mixed {
@@ -138,8 +147,6 @@ class Database implements \Iterator, EntityStore {
   }
 
   /**
-   * (non-PHPdoc)
-   *
    * @see Iterator::rewind()
    */
   public function rewind() : void {
@@ -147,11 +154,16 @@ class Database implements \Iterator, EntityStore {
   }
 
   /**
-   * (non-PHPdoc)
-   *
    * @see Iterator::key()
    */
   public function key() : mixed {
     return \key($this->users);
+  }
+  
+  /**
+   * @see Countable::count()
+   */
+  public function count(): int {
+    return \count($this->users);
   }
 }

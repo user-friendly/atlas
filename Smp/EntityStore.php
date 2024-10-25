@@ -23,16 +23,16 @@ interface EntityStore {
   /**
    * Create.
    * 
-   * @param Entity $entity
+   * @param $entity
    * @return bool
    *   TRUE if the entity was added successfully to the store, FALSE otherwise.
    */
-  public function add(Entity $entity) : bool;
+  public function add($entity) : bool;
   
   /**
    * Read.
    * 
-   * @param Entity|int $id
+   * @param int $id
    * @return Entity|FALSE
    *   FALSE if the entity was not found.
    */
@@ -45,12 +45,12 @@ interface EntityStore {
    * using the data in the supplied $entity.
    * 
    * @param int $id
-   * @param Entity $entity
+   * @param mixed $entity
    *   Note the ids of each entity MUST NOT be updated.
    * @return bool
    *   TRUE if the entity was updated successfully, FALSE otherwise.
    */
-  public function update(int $id, Entity $entity) : bool;
+  public function update(int $id, $entity) : bool;
   
   /**
    * Delete.
@@ -60,6 +60,6 @@ interface EntityStore {
    *   TRUE if the entity was removed from the store successfully,
    *   FALSE otherwise.
    */
-  public function delete(Entity|int $entity) : bool;
+  public function delete(mixed $entity) : bool;
 }
 

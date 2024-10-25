@@ -24,6 +24,11 @@ Enable xDebug for a given test run, pass `xdebug` as the first argument:
 
 `sh test xdebug Ui/Command/TokenizerTest.php`
 
+# TESTS NOTES
+
+Run tests multiple times, especially for the ones that use static test
+objects.
+
 # TELNET NOTES
 
 hex => decimal => char
