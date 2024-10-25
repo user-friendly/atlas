@@ -14,13 +14,15 @@ if (!defined("DEBUG")) {
 
 use Smp\Logger\LoggerFactory;
 use Smp\Logger\LoggerTrait;
-use Smp\User\Manager as UserManager;
 use Smp\Ui\InputText;
 use Smp\Ui\OutputText;
 use Smp\Ui\Command\CommandQueue;
-use Smp\User\Manager;
 use Smp\Ui\Command\Command;
 use Smp\Ui\Command\Message;
+
+use Smp\User\Factory as UserFactory;
+use Smp\User\Database as UserDatabase;
+use Smp\User\UserState;
 
 // TODO Add timeout for users. After a certain period of inactivity, kick the user.
 
@@ -57,7 +59,12 @@ class Game {
   protected $server;
   
   /**
-   * @var UserManager
+   * @var UserFactory
+   */
+  protected $userFactory;
+  
+  /**
+   * @var UserDatabase
    */
   protected $users;
   
@@ -102,6 +109,27 @@ class Game {
     }
   }
   
+  /**
+   * Creates a temp user.
+   * 
+   * Used for new connections.
+   * 
+   * @return int|FALSE
+   */
+  protected function createAnonUser() : int|FALSE {
+    $anon_user = $this->userFactory->createTemporary(
+      $this->users->getNextId()
+    );
+    
+    $anon_user->setState(UserState::Login);
+    $ok = $this->users->add($anon_user);
+    
+    if (!$ok) {
+      return FALSE;
+    }
+    return $anon_user->getId();
+  }
+  
   public function __construct() {
     LoggerFactory::init();
     $this->logger = static::getLogger();
@@ -109,7 +137,11 @@ class Game {
     $this->process = new Process();
     $this->process->addSignalHandler([$this, "signalShutdown"]);
     
-    $this->users = new UserManager();
+    $this->userFactory = new UserFactory();
+    
+    $this->users = new UserDatabase(
+      $this->userFactory->createTemporary()
+    );
     
     $this->inputUi = new InputText();
     $this->outputUi = new OutputText();
@@ -228,7 +260,7 @@ class Game {
     return $this::EXIT_SUCCESS;
   }
   
-  public function getUsers() : Manager {
+  public function getUsers() : UserDatabase {
     return $this->users;
   }
   
@@ -246,17 +278,22 @@ class Game {
       throw new \RuntimeException("Client already present in user map: {$net_id}");
     }
     
-    // Create a temporary user.
-    $anon_user = $this->users->createTempUser();
+    $uid = $this->createAnonUser();
+    
+    if (FALSE === $uid) {
+      $this->server->output($net_id, Utility::t("Internal server error. Disconnecting you, sorry."));
+      $this->server->disconnect($net_id);
+      return;
+    }
     
     // Link user to client.
-    $this->associateUserClient($anon_user->getId(), $net_id);
+    $this->associateUserClient($uid, $net_id);
     
-    // FIXM Convert to some sort of a command/game event?
-    $this->outputUi->println($anon_user->getId(), "Welcome to SMP!");
-    $this->outputUi->println($anon_user->getId(), "");
-    $this->outputUi->println($anon_user->getId(), "You can use the following commands: say, quit, rename.");
-    $this->outputUi->println($anon_user->getId(), "");
+    // FIXME Convert to some sort of a command/game event?
+    $this->outputUi->println($uid, "Welcome to SMP!");
+    $this->outputUi->println($uid, "");
+    $this->outputUi->println($uid, "You can use the following commands: say, quit, rename.");
+    $this->outputUi->println($uid, "");
   }
   
   public function requestDisconnect($uid) : bool {

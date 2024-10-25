@@ -46,22 +46,17 @@ final class Rename extends Command {
        */
       $game = $this->context['game'];
       $user = $game->getUsers()->get($this->context['uid']);
-      $pass =  $game->getUsers()->getPass($user->getId());
+      
+      if (!$user) {
+        throw new \RuntimeException("Could not update username. Do you even exist?");
+      }
       
       // FIXME Validate username.
       $new_username = $this->args[0];
       
-      $new_user = $game->getUsers()->update(
-        $user->getId(),
-        $new_username,
-        $pass,
-        $user->getContext()
-      );
-      if ($new_user) {
-        $game->getOutputUi()->println($new_user->getId(), "Your new name is '{$new_user->getUsername()}'.");
-      } else {
-        throw new \RuntimeException("Could not update username.");
-      }
+      $user->setUsername($new_username);
+      
+      $game->getOutputUi()->println($user->getId(), "Your new name is '{$user->getUsername()}'.");
     }
     else {
       $this->logger->error("Missing contexts: uid, game.");
