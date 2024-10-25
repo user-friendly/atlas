@@ -48,7 +48,12 @@ final class ManagerTest extends BaseTest {
     
     $this->assertEquals($context, $new_context, "New user has the correct context.");
   }
-  
+/*   
+  #[DataProvider('userProvider')]
+  public function testDelete($username, $password, $context) : void {
+    throw new \Exception("TODO Implement test. Make sure the password was removed from the manager store!!!");
+  }
+   */
   public function testPassword() : void {
     $users = static::userProvider();
     

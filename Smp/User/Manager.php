@@ -6,6 +6,8 @@
 
 namespace Smp\User;
 
+throw new \Exception('Deprecated - do not use!');
+
 use Smp\Logger\LoggerTrait;
 use Smp\Logger\LoggerFactory;
 
@@ -48,7 +50,7 @@ class Manager implements \Iterator {
     $this->nextId = 1;
   }
   
-  protected function getNextId() {
+  protected function getNextId() : int {
     return $this->nextId++;
   }
   
@@ -59,7 +61,7 @@ class Manager implements \Iterator {
    * @return \Smp\User\User|FALSE
    *   Returns the user object or FALSE if one was not found.
    */
-  public function get($uid) : User|FALSE {
+  public function get(int $uid) : User|FALSE {
     $uid = (string) $uid;
     if (isset($this->users[$uid]) && \is_object($this->users[$uid])) {
       return $this->users[$uid];
@@ -72,12 +74,12 @@ class Manager implements \Iterator {
    * 
    * @param string $username
    *   User's name. This will be the login name, not the game name.
-   * @param string $password
+   * @param string|NULL $password
    * @param array $context
    * @return \Smp\User\User|FALSE
    *   Returns the user object or FALSE if one was not created.
    */
-  public function create($username, $password, $context = []) : User {
+  public function create(string $username, string|NULL $password, array $context = []) : User {
     $new_uid = (string) $this->getNextId();
     // Make sure there is no existing user with the given id.
     if (!$this->get($new_uid)) {
@@ -92,38 +94,16 @@ class Manager implements \Iterator {
   }
   
   /**
-   * Create a temporary user.
-   * 
-   * @return \Smp\User\User
-   */
-  public function createTempUser() {
-    do {
-      $anon_user = $this->create($this::TEMP_USERNAME, NULL);
-    } while (!$anon_user);
-    return $anon_user;
-  }
-  
-  /**
    * Update an existing user.
    * 
    * @param mixed $user
-   *   Either the user id or User object.
-   * @param string $username
+   *   The User object, with updated fields.
    * @param string|NULL $password
-   *   Pass NULL to leave password unmodified.
-   * @param array|NULL $context
-   *   Pass NULL to leave context unmodified.
    * @return \Smp\User\User|FALSE
    *   Returns the user object or FALSE if one was not updated or found.
    */
-  public function update($user, $username, $password, $context = []) : User|FALSE {
-    // Get user id first.
-    if (\is_object($user)) {
-      $uid = $user->getId();
-    }
-    else {
-      $uid = (string) $user;
-    }
+  public function update(User $user, string|NULL $password = NULL) : User|FALSE {
+    $uid = $user->getId();
     // Validate user exists.
     $update_user = $this->get($uid);
     if (!$update_user) {
@@ -131,9 +111,11 @@ class Manager implements \Iterator {
       return FALSE;
     }
     
-    $update_user = new User($uid, $username, $context);
+    $update_user = new User($uid, $user->getUsername(), $user->getContext());
     $this->users[$uid] = $update_user;
-    $this->usersPass[$uid] = $password;
+    if (NULL !== $password) {
+      $this->usersPass[$uid] = $password;
+    }
     
     $this->logger->info("Updated user: {$uid}@{$update_user->getUsername()}.");
     return $update_user;
@@ -147,7 +129,7 @@ class Manager implements \Iterator {
    * @return bool
    *   Returns TRUE if a user was found and deleted, FALSE otherwise.
    */
-  public function delete($user) : bool {
+  public function delete(User|int $user) : bool {
     // Get user id first.
     if (\is_object($user)) {
       $uid = $user->getId();
@@ -174,7 +156,7 @@ class Manager implements \Iterator {
    * @return string|FALSE
    *   Returns the unsecured password or FALSE if one was not found.
    */
-  public function getPass($uid) : string|NULL|FALSE {
+  public function getPass(int $uid) : string|NULL|FALSE {
     if ($this->get($uid) && array_key_exists($uid, $this->usersPass)) {
       return $this->usersPass[$uid];
     }

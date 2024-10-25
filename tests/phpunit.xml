@@ -9,6 +9,7 @@
          beStrictAboutOutputDuringTests="true"
          displayDetailsOnIncompleteTests="true"
          displayDetailsOnSkippedTests="true"
+         displayDetailsOnTestsThatTriggerWarnings="true"
          failOnRisky="false"
          failOnWarning="false"
          colors="true"

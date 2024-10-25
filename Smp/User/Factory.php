@@ -23,17 +23,17 @@ class Factory {
   public function __construct() {
     LoggerFactory::init();
     $this->logger = static::getLogger();
-    
-    $this->db = $db;
   }
   
   public function create(
     int $id,
     string $username,
+    string $password = NULL,
     array $context = [],
     UserState $state = UserState::Login
   ) {
     $new_user = new User($id, $username);
+    $new_user->setPassword($password);
     $new_user->setContext($context);
     $new_user->setState($state);
     return $new_user;
@@ -50,4 +50,3 @@ class Factory {
     return $this->create($id, $this::TEMP_USERNAME);
   }
 }
-
