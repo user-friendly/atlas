@@ -56,17 +56,23 @@ final class Talk extends Command {
       $name = "$uid@{$user->getUsername()}";
       $text = \trim(\implode(' ', $this->getArguments()));
       
+      $this->logger->info("User says '{$text}'.");
+        
       if (!$text) {
         $outputUi->println($uid, "Com' on now, you have to say something?");
         return $this;
       }
       
       foreach ($game->getUsers() as $recipient_id => $user) {
+        if ($recipient_id == 0) {
+          continue;
+        }
+        
         if ($uid != $recipient_id) {
-          $outputUi->println($recipient_id, "\n$name says '$text'");
+          $outputUi->print($recipient_id, "\n$name says '$text'");
         }
         else {
-          $outputUi->println($recipient_id, "You say '$text'");
+          $outputUi->print($recipient_id, "You say '$text'");
         }
       }
     }

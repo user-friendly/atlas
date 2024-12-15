@@ -21,8 +21,6 @@ class OutputText {
   
   const NEW_LINE = "\n";
   
-  const DEFAULT_PROMPT = 'SMP> ';
-  
   /**
    * Maximum buffer size per user. 
    * 
@@ -73,8 +71,7 @@ class OutputText {
    */
   public function processOutput() {
     foreach ($this->buffers as $uid => $text) {
-      // Don't FORGET to update the peekOutput() prompt too, when updating this one!
-      yield $uid => $text . $this::DEFAULT_PROMPT;
+      yield $uid => $text;
     }
     $this->buffers = [];
   }
@@ -86,7 +83,7 @@ class OutputText {
    */
   public function peekOutput() {
     foreach ($this->buffers as $uid => $text) {
-      yield $uid => $text . $this::DEFAULT_PROMPT;
+      yield $uid => $text;
     }
   }
 }
