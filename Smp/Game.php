@@ -219,6 +219,7 @@ class Game {
       
       // *** Handle UI inputs. ***
       // TODO Text batching of command execution.
+      // TODO Execute commands based on cycles left (of the frame) instead of ... magic const.
       $max = 8;
       for ($cmds_executed = 0; $cmds_executed < $max && ($command = $this->commands->dequeue()); $cmds_executed++) {
         $context = $command->getContext();
@@ -251,7 +252,7 @@ class Game {
       }
       
       $this->process->yield();
-    }
+    } // run()
     
     // Graceful shutdown.
     $this->server->shutdown();
