@@ -1,31 +1,33 @@
 <?php
 /**
  * @file
- * Entity class file.
+ * 
+ * Entity interface file.
  */
 
 namespace Smp;
 
 /**
- * Base entity.
+ * Generic entity interface.
  * 
- * NOTE This class will either be a base abstract class or
- *      the entity class (using composition) for the entity system.
+ * This should be the most base generic type of entity, suitable not
+ * only for game objects, but any type of object.
  */
-class Entity {
+interface Entity {
   /**
-   * Unique number identifier.x
+   * Unique integer identifier.
    * 
-   * @var int
+   * @return int
    */
-  protected $id;
-  
-  // protected $serialId;
+  public function getId() : int;
   
   /**
    * Machine name.
    * 
-   * @var string
+   * Should be the unique machine name of an
+   * individual entity.
+   * 
+   * @return string
    */
-  protected $name;
+  public function getName() : string;
 }

@@ -7,6 +7,8 @@
 // FIXME Inconsistent error handling - are you going to throw exceptions or return
 //       FALSE?!
 
+// FIXME Can probably be moved into Server. Too generic. Needs to be simplified.
+
 // TODO Document the magic getters and setters.
 
 namespace Smp\Network;
@@ -139,6 +141,11 @@ class Connection {
     return \fclose($this->stream);
   }
   
+  // TODO Test method?
+  public function shutdown($mode = \STREAM_SHUT_RD) : bool {
+    return \stream_socket_shutdown($this->stream, $mode);
+  }
+  
   /**
    * Receive data.
    */
@@ -152,12 +159,12 @@ class Connection {
     if (\strlen($read_buff)) {
       $this->readBuffer .= $read_buff;
       
-//       if (DEBUG) {
-//         $sz = \strlen($read_buff);
-//         $hex = \bin2hex($read_buff);
+      if (DEBUG) {
+        $sz = \strlen($read_buff);
+        $hex = \bin2hex($read_buff);
 //         $this->logger->debug("{$this->remoteName} received {$sz} bytes: {$hex}");
 //         $this->logger->debug("{$this->remoteName}: \n{$read_buff}");
-//       }
+      }
     }
     return $this;
   }

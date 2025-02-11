@@ -8,6 +8,7 @@ namespace Smp\User;
 
 use Smp\Logger\LoggerFactory;
 use Smp\Logger\LoggerTrait;
+use Smp\Entity;
 
 /**
  * For the time being, do not store the password in the
@@ -21,11 +22,12 @@ use Smp\Logger\LoggerTrait;
  * 
  * Users are objects representing a human. Synonymous to "account".
  */
-class User {
+class User implements Entity {
   use LoggerTrait;
   
   protected $id = 0;
   protected $username = NULL;
+  protected $password = NULL;
   protected $context = NULL;
   
   /**
@@ -37,50 +39,67 @@ class User {
    */
   protected UserState $state = UserState::Login;
   
-  /**
-   * A unique identifier.
-   * 
-   * @var string
-   */
-  protected $uuid = NULL;
-  
-  public function __construct(int $id, string $username, array $context = []) {
+  public function __construct(int $id, string $username) {
     LoggerFactory::init();
     $this->logger = static::getLogger();
     
     $this->id = $id;
     $this->username = $username;
-    $this->context = $context;
   }
   
   /**
-   * User identifier.
-   * 
-   * This is the temp/in-memory object identifier.
-   * 
-   * @return int
+   * {@inheritDoc}
+   * @see \Smp\Entity::getName()
+   */
+  public function getName(): string {
+    return $this->getUsername();
+  }
+  
+  /**
+   * {@inheritDoc}
+   * @see \Smp\Entity::getId()
    */
   public function getId() : int {
     return $this->id;
-  }
-  
-  public function getUUID() : string {
-    return $this->uuid;
   }
   
   public function getUsername() : string {
     return $this->username;
   }
   
+  public function setUsername($username) : self {
+    // TODO Validate username. Throw an exception or return false?
+    //      Should validation be this class' responsibility?
+    $this->username = $username;
+    return $this;
+  }
+  
+  public function getPassword() : string|NULL {
+    return $this->password;
+  }
+  
+  public function setPassword($password) : self {
+    // TODO Validate password. Throw an exception or return false?
+    //      Should validation be this class' responsibility?
+    $this->password = $password;
+    return $this;
+  }
+  
   public function getContext() : array {
     return $this->context;
+  }
+  
+  public function setContext($context) : self {
+    $this->context = $context;
+    return $this;
   }
   
   public function getState() : UserState {
     return $this->state;
   }
   
-  public function setState(UserState $new_state) : void {
+  public function setState(UserState $new_state) : self {
     $this->state = $new_state;
+    return $this;
   }
 }

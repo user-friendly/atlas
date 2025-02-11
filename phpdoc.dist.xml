@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<phpdocumentor
+        configVersion="3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="https://www.phpdoc.org"
+>
+    <title>Simple MUD in PHP</title>
+    <paths>
+        <output>doc/</output>
+        <cache>doc/.cache</cache>
+    </paths>
+	
+	<version number="latest">
+        <api format="php">
+            <source dsn=".">
+                <path>scripts</path>
+                <path>Smp</path>
+                <path>tests</path>
+            </source>
+        </api>
+    </version>
+</phpdocumentor>

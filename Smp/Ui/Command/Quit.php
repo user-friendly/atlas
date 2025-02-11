@@ -8,6 +8,7 @@
 namespace Smp\Ui\Command;
 
 use Smp\Utility;
+use Smp\Game;
 
 /**
  * Quit command.
@@ -43,13 +44,34 @@ final class Quit extends Command {
    * @see \Smp\Ui\Command\Command::execute()
    */
   public function execute(): self {
-    if (isset($this->context['user'])) {
-      throw new \RuntimeException("TODO Implement command.");
+    if (isset($this->context['uid']) && isset($this->context['game'])) {
+      /**
+       * @var Game $game
+       */
+      $game = $this->context['game'];
+      $uid = $this->context['uid'];
+      $boradcast = isset($this->context['broadcast']) ? $this->context['broadcast'] : TRUE;
+      
+      // Do some cleanup and stuff... maybe even add a command or something.
+      
+      // FIXME Return a messge command maybe? And have the broadcast flag there.
+      if ($boradcast) {
+        $outputUi = $game->getOutputUi();
+        $quitter = $game->getUsers()->get($uid)->getUsername();
+        foreach ($game->getUsers() as $recipient_id => $user) {
+          if ($uid == $recipient_id) {
+            $outputUi->println($recipient_id, "Bye! Hope to see you soon.");
+          }
+          else {
+            $outputUi->println($recipient_id, "\nPlayer {$quitter} has left this universe.");
+          }
+        }
+      }
+      $game->requestDisconnect($uid);
     }
     else {
-      $this->logger->error("User context is required, but was not found.");
+      $this->logger->error("User, & Game context is required, but was not found.");
     }
-    
     return $this;
   }
 

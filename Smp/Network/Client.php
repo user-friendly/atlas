@@ -2,6 +2,9 @@
 /**
  * @file
  * A simple client.
+ * 
+ * @deprecated Not really, just refactor it and move it somewhere else.
+ * It will probably be used for testing.
  */
 
 namespace Smp\Network;

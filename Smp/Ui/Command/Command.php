@@ -173,6 +173,9 @@ abstract class Command {
   /**
    * Executes the command.
    * 
+   * FIXME Looks like the implementing commands are throwing Exceptions and
+   *       directly writing to user output. This needs to be redesigned.
+   * 
    * @return self
    */
   abstract public function execute() : self;
