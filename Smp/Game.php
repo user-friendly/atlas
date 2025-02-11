@@ -139,9 +139,7 @@ class Game {
     
     $this->userFactory = new UserFactory();
     
-    $this->users = new UserDatabase(
-      $this->userFactory->createTemporary()
-    );
+    $this->users = new UserDatabase();
     
     $this->inputUi = new InputText();
     $this->outputUi = new OutputText();

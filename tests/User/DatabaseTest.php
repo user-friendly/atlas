@@ -22,19 +22,10 @@ final class DatabaseTest extends BaseTest {
   public static function setUpBeforeClass(): void
   {
     self::$factory = new UserFactory();
-    
-    self::$admin = self::$factory->create(0, 'admin', 'qwerty');
-    self::$db = new UserDatabase(self::$admin);
-  }
-  
-  // Hah, well now, how will this bite me in the ...
-  #[TestDox('Create database and initial/admin user.')]
-  public function testConstructor() : void {
-    $this->assertSame(self::$admin, self::$db->get(0), "Initial user is in database.");
+    self::$db = new UserDatabase();
   }
   
   #[TestDox('Get next id.')]
-  #[Depends('testConstructor')]
   public function testNextId() {
     $id = self::$db->getNextId();
     $this->assertIsInt($id);
@@ -42,7 +33,6 @@ final class DatabaseTest extends BaseTest {
   }
   
   #[TestDox('Add user to database.')]
-  #[Depends('testConstructor')]
   #[DataProviderExternal(UserDataProvider::class, 'userProvider')]
   public function testAdd($id, $username, $password, $context, $state) : void {
     $new_user = self::$factory->create($id, $username, $password, $context, $state);
@@ -56,13 +46,14 @@ final class DatabaseTest extends BaseTest {
     $this->assertSame($password, $user->getPassword(), "User has the correct password.");
     $this->assertEquals($context, $user->getContext(), "User has the correct context.");
     $this->assertEquals($state, $user->getState(), "User has the correct game state.");
+    
+    $this->assertEquals($id + 1, self::$db->getNextId(), "Next user ID is correct.");
   }
   
   #[TestDox('Iterate over database.')]
   #[Depends('testAdd')]
   public function testIterate() : void {
-    // Don't forget the admin.
-    $test_set_size = 1 + UserDataProvider::getCount();
+    $test_set_size = UserDataProvider::getCount();
     $db_size = \count(self::$db);
     $this->assertEquals($test_set_size, $db_size);
     
@@ -116,7 +107,6 @@ final class DatabaseTest extends BaseTest {
   }
   
   #[TestDox('Delete non-existing user from database.')]
-  #[Depends('testConstructor')]
   public function testFalseDelete() : void {
     // MUST alwasy fail.
     $ret = self::$db->delete(self::$db->getNextId());
@@ -142,9 +132,6 @@ final class DatabaseTest extends BaseTest {
   #[TestDox('Verify database is empty.')]
   #[Depends('testDelete')]
   public function testDeleteDone() : void {
-    // Last but not least, delete the admin.
-    $ret = self::$db->delete(self::$admin);
-    $this->assertTrue(TRUE === $ret);
     $this->assertEmpty(self::$db);
   }
   

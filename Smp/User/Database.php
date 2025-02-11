@@ -30,15 +30,10 @@ class Database implements \Iterator, Countable, EntityStore {
   
   /**
    * Class constructor.
-   * 
-   * @param User $user
-   *   Sets the initial user. Usually, the admin user.
    */
-  public function __construct(User $user) {
+  public function __construct() {
     LoggerFactory::init();
     $this->logger = static::getLogger();
-    
-    $this->users[0] = $user;
   }
   
   /**
@@ -52,7 +47,7 @@ class Database implements \Iterator, Countable, EntityStore {
    * @return int
    */
   public function getNextId() : int {
-    return 1 + \max(\array_keys($this->users));
+    return 1 + \max(\array_merge([0], \array_keys($this->users)));
   }
   
   /**
