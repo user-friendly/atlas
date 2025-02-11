@@ -12,7 +12,7 @@ Run PHPUnit test suite:
 
 `sh test`
 
-Run a specific case:
+Run a specific case (exclude `tests/` directory from path):
 
 `sh test Ui/Command/TokenizerTest.php`
 
