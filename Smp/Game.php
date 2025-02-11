@@ -175,15 +175,10 @@ class Game {
           $inputs = [];
           
           try {
+            // Tokenize input. Basically, breaks it down to commands.
             $inputs = $this->inputUi->processInput($input);
           } catch (\Exception $e) {
             $this->logger->error("Failed to process input from user (client id $cid, user id: $uid).", ['exceptoin' => $e]);
-            continue;
-          }
-          
-          if (empty($inputs)) {
-            // Prints the prompt.
-            $this->outputUi->print($uid);
             continue;
           }
           
