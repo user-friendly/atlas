@@ -89,6 +89,13 @@ class Utility {
   }
   
   /**
+   * A \number_format() proxy.
+   */
+  public static function formatNumber(int|float $number) {
+    return \number_format($number);
+  }
+  
+  /**
    * Gets the non-FQN class name of an object.
    * 
    * @param object|string $thing
