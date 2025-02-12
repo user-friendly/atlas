@@ -61,6 +61,33 @@ class Utility {
     return \rtrim($str);
   }
   
+  // Nanoseconds contained within the other time units.
+  protected const NANO_SECOND = 1e9;
+  protected const NANO_MILI = 1e6;
+  protected const NANO_MICRO = 1e3;
+  
+  /**
+   * Generate debug string for high resolution time. 
+   * 
+   * @param int $nano_time
+   * @return string
+   */
+  public static function formatTimeHR(int $nano_time) {
+    /*
+     | Unit          | Symbol | Equivalent in Seconds     | Description                   |
+     |---------------|--------|---------------------------|-------------------------------|
+     | Second        | s      | 1                         | Base unit of time             |
+     | Millisecond   | ms     | 0.001 (10^-3)             | Thousandth of a second        |
+     | Microsecond   | us     | 0.000001 (10^-6)          | Millionth of a second         |
+     | Nanosecond    | ns     | 0.000000001 (10^-9)       | Billionth of a second         |
+     */
+    $s = \floor($nano_time / static::NANO_SECOND);
+    $ms = \floor(($nano_time % static::NANO_SECOND) / static::NANO_MILI);
+    $us = \floor(($nano_time % static::NANO_MILI) / static::NANO_MICRO);
+    $ns = $nano_time % static::NANO_MICRO;
+    return "$s s, $ms ms, $us us, $ns ns";
+  }
+  
   /**
    * Gets the non-FQN class name of an object.
    * 
@@ -112,5 +139,16 @@ class Utility {
    */
   public static function getTimeMicro() : float {
     return \microtime(TRUE);
+  }
+  
+  /**
+   * Get high resolution time.
+   * 
+   * A proxy for \hrtime(true).
+   * 
+   * @return int
+   */
+  public static function getTimeHR() : int {
+    return \hrtime(true);
   }
 }
