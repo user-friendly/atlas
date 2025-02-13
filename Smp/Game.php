@@ -154,14 +154,48 @@ class Game {
    * @return int
    */
   public function run() : int {
+    $run_time_start = \time();
+    
     // Initialize & start listening for connections.
     $this->server = new Network\Server();
     
     $this->server->setListenerConnected(array($this, 'handleClientConnected'));
     $this->server->setListenerDisconnected(array($this, 'handleClientDisconnected'));
     
+    // Tick time excludes forced wait.
+    $time_tick = 0;
+    // Requested ticks per second.
+    $req_ticks_per_sec = 240;
+    // Requested nano time per tick.
+    $req_time_per_tick = (int) (1e9 / $req_ticks_per_sec);
+    
+    $this->logger->debug("Requested tps: " . Utility::formatNumber($req_ticks_per_sec));
+    $this->logger->debug("Requested nano per tick: " . Utility::formatNumber($req_time_per_tick));
+    
+    $ticks_count = 0;
+    $ticks_time_mean = 0;
+    // Reset mean every N ticks.
+    $ticks_mean_flush = 60 * $req_ticks_per_sec;
+    $ticks_mean_count = 0;
+    
     $this->logger->debug("Start main game loop.");
     while ($this->run) {
+      $time_tick_start = Utility::getTimeHR();
+      
+      // *** Tick reporting. ***
+      $ticks_time_mean += $time_tick;
+      // if ($ticks_count % $ticks_mean_flush == 0) {
+      if (++$ticks_mean_count >= $ticks_mean_flush) {
+        $ticks_time_mean = (int) ($ticks_time_mean / $ticks_mean_flush);
+        $dbg_ticks_time_mean = Utility::formatTimeHR($ticks_time_mean);
+        $this->logger->debug("Mean tick time: $dbg_ticks_time_mean (total ns: $ticks_time_mean)");
+        $ticks_time_mean = 0;
+        
+        $ticks_mean_count = 0;
+      }
+      
+      // \time_nanosleep(0, 15_833_333);
+      
       // Accept new connections, receive & send, cleanup disconnected clients (once every N seconds).
       $this->server->run();
       
@@ -244,8 +278,34 @@ class Game {
         }
       }
       
-      $this->process->yield();
-    } // run()
+      // FIXME Get rid of the Process class!!! See class file.
+      // $this->process->yield();
+      
+      $ticks_count += 1;
+      
+      $time_tick = Utility::getTimeHR() - $time_tick_start;
+      
+      // Busy-wait (approx) requested ticks per second.
+      // $this->logger->debug("Tick time: $time_tick ns");
+      if ($req_time_per_tick > $time_tick) {
+        // $this->logger->debug("Wait for: " . ($req_time_per_tick - $time_tick) . " ns");
+        $sleep_till = Utility::getTimeHR() + ($req_time_per_tick - $time_tick);
+        $wait_counter = 0;
+        while($sleep_till > Utility::getTimeHR()) {
+          $wait_counter += 1;
+        }
+      }
+    } // while ($this->run)
+    
+    $run_time = \time() - $run_time_start + (3600 * 128);
+    
+    $actual_ticks_per_second = $ticks_count / $run_time;
+    $this->logger->debug("Actual tps ~ " . Utility::formatNumber($actual_ticks_per_second));
+    $this->logger->debug("Total ticks: " . Utility::formatNumber($ticks_count));
+    $this->logger->debug("Should be ~ " . Utility::formatNumber($run_time * $req_ticks_per_sec));
+    
+    $run_time_h = Utility::formatSeconds($run_time);
+    $this->logger->info("Runtime: $run_time_h ($run_time s)");
     
     // Graceful shutdown.
     $this->server->shutdown();
