@@ -36,7 +36,7 @@ use Smp\User\UserState;
 class Game {
   use LoggerTrait;
   
-  const VERSION = '1.0.0-alpha2';
+  const VERSION = '1.0.0-alpha3';
   
   const EXIT_SUCCESS = 0;
   const EXIT_FAILURE = 1;
@@ -215,6 +215,9 @@ class Game {
   public function run() : int {
     $run_time_start = \time();
     
+    $this->logger->info("Simple MUD in PHP.");
+    $this->logger->info("Version: " . $this::VERSION);
+    
     // Initialize & start listening for connections.
     $this->server = new Network\Server();
     
@@ -357,9 +360,9 @@ class Game {
     
     $actual_ticks_per_second = $ticks_count / $run_time;
     $this->logger->debug("Actual tps ~ " . Utility::formatNumber($actual_ticks_per_second));
-    $this->logger->debug("Total ticks: " . Utility::formatNumber($ticks_count));
-    $this->logger->debug("Should be ~ " . Utility::formatNumber($run_time * $req_ticks_per_sec));
+    $this->logger->debug("Total ticks should be ~ " . Utility::formatNumber($run_time * $req_ticks_per_sec));
     
+    $this->logger->info("Total ticks: " . Utility::formatNumber($ticks_count));
     $run_time_h = Utility::formatSeconds($run_time);
     $this->logger->info("Runtime: $run_time_h ($run_time s)");
     
