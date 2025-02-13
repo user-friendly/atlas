@@ -2,6 +2,10 @@
 /**
  * @file
  * Process class file.
+ * 
+ * FIXME Refactor/deprecate this class!!
+ *       Move it to a separate repo and remove SMP specifics.
+ *       Signal handling can be moved into Smp\Game or trim this class. 
  */
 
 namespace Smp;
@@ -12,6 +16,8 @@ use Symfony\Component\EventDispatcher\GenericEvent;
 
 /**
  * Manager class for the current process.
+ * 
+ * @deprecated
  */
 class Process {
   use LoggerTrait;
