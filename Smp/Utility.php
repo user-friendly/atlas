@@ -62,9 +62,9 @@ class Utility {
   }
   
   // Nanoseconds contained within the other time units.
-  protected const NANO_SECOND = 1e9;
-  protected const NANO_MILI = 1e6;
-  protected const NANO_MICRO = 1e3;
+  protected const NANO_SECOND = 1_000_000_000; // 1e9;
+  protected const NANO_MILI = 1_000_000; // 1e6;
+  protected const NANO_MICRO = 1_000; // 1e3;
   
   /**
    * Generate debug string for high resolution time. 
