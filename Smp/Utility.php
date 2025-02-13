@@ -61,6 +61,10 @@ class Utility {
     return \rtrim($str);
   }
   
+  // Seconds per units of time.
+  protected const SECONDS_HOUR = 3600;
+  protected const SECONDS_DAY = 86_400;
+  
   // Nanoseconds contained within the other time units.
   protected const NANO_SECOND = 1_000_000_000; // 1e9;
   protected const NANO_MILI = 1_000_000; // 1e6;
@@ -93,6 +97,24 @@ class Utility {
    */
   public static function formatNumber(int|float $number) {
     return \number_format($number);
+  }
+  
+  /**
+   * Generate debug string for seconds.
+   * 
+   * @param int $seconds
+   * @return string
+   */
+  public static function formatSeconds(int $seconds) {
+    $days = \floor($seconds / (static::SECONDS_DAY));
+    $hours = \floor(($seconds % (static::SECONDS_DAY)) / static::SECONDS_HOUR);
+    $minutes = \floor(($seconds % static::SECONDS_HOUR) / 60);
+    $seconds = $seconds % 60;
+    $str =  "{$hours}:{$minutes}:{$seconds}";
+    if ($days > 0) {
+      $str = "{$days} day" . ($days > 1 ? 's' : '') . ", $str";
+    }
+    return $str;
   }
   
   /**
