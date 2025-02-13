@@ -12,14 +12,16 @@ if (!defined("DEBUG")) {
   define("DEBUG", FALSE);
 }
 
+
+use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\EventDispatcher\GenericEvent;
+
 use Smp\Logger\LoggerFactory;
 use Smp\Logger\LoggerTrait;
 use Smp\Ui\InputText;
 use Smp\Ui\OutputText;
 use Smp\Ui\Command\CommandQueue;
-use Smp\Ui\Command\Command;
 use Smp\Ui\Command\Message;
-
 use Smp\User\Factory as UserFactory;
 use Smp\User\Database as UserDatabase;
 use Smp\User\UserState;
@@ -34,15 +36,42 @@ use Smp\User\UserState;
 class Game {
   use LoggerTrait;
   
-  const VERSION = '1.0.0-alpha1';
+  const VERSION = '1.0.0-alpha2';
   
   const EXIT_SUCCESS = 0;
   const EXIT_FAILURE = 1;
   
   /**
-   * @var \Smp\Process
+   * Termination signals.
+   *
+   * @var array
    */
-  protected $process;
+  static protected $termSignals = [
+    SIGTERM,
+    SIGINT,
+    SIGHUP,
+    SIGQUIT,
+  ];
+  
+  /**
+   * Process id.
+   *
+   * @var int
+   */
+  protected $pid;
+  
+  /**
+   * Parent process id.
+   *
+   * @var int
+   */
+  protected $ppid;
+  
+  /**
+   * @var \Symfony\Component\EventDispatcher\EventDispatcher;
+   */
+  protected $signalDispatcher;
+  protected $signalTermReceived = FALSE;
   
   /**
    * Control for main game loop.
@@ -130,13 +159,43 @@ class Game {
     return $anon_user->getId();
   }
   
+  /**
+   * Setup process signal handling.
+   */
+  protected function setupSignalHandling() {
+    $this->signalDispatcher = new EventDispatcher();
+    
+    // See https://wiki.php.net/rfc/async_signals
+    if (!\pcntl_async_signals()) {
+      \pcntl_async_signals(true);
+    }
+    
+    $generic_handler = [$this, 'signalHandler'];
+    $signals = [
+      // Cannot be handled/ignored.
+      // SIGKILL,
+      SIGUSR1,
+    ];
+    $signals = \array_merge(static::$termSignals, $signals);
+    foreach ($signals as $signo) {
+      \pcntl_signal($signo, $generic_handler);
+    }
+    
+    // Register the Game shutdown handler.
+    $this->signalDispatcher->addListener("parallel.process.signal", [$this, "signalShutdown"]);
+    
+    // Update process ids.
+    $this->pid = \posix_getpid();
+    $this->ppid = \posix_getppid();
+    $this->logger->debug("Process ids {$this->pid}({$this->ppid})");
+  }
+  
   public function __construct() {
     LoggerFactory::init();
     $this->logger = static::getLogger();
     
-    $this->process = new Process();
-    $this->process->addSignalHandler([$this, "signalShutdown"]);
-    
+    $this->setupSignalHandling();
+        
     $this->userFactory = new UserFactory();
     
     $this->users = new UserDatabase();
@@ -278,9 +337,6 @@ class Game {
         }
       }
       
-      // FIXME Get rid of the Process class!!! See class file.
-      // $this->process->yield();
-      
       $ticks_count += 1;
       
       $time_tick = Utility::getTimeHR() - $time_tick_start;
@@ -385,6 +441,40 @@ class Game {
       if (empty($this->clientToUser)) {
         $this->logger->debug("There are no more users connected to the server.");
       }
+    }
+  }
+  
+  // Has to be public? What a drag.
+  public function signalHandler(int $signo, $siginfo) : void {
+    $this->signalDispatcher->dispatch(new GenericEvent($signo, [$siginfo]), "parallel.process.signal");
+    
+    if (in_array($signo, static::$termSignals)) {
+      $this->logger->warning("Forced shutdown of {$this->pid}({$this->ppid}).");
+      // Termination requested.
+      // TODO Try to gracefully shutdown the deamon and its children.
+      // TODO Do not wait on child processes. Notify them instead of the manager
+      //      process termination.
+      //      Edit: signals seem to be passed to the child processes
+      // FIXME This does not look good. What are the standard shutdown Unix procedures?
+      if ($this->signalTermReceived) {
+        exit($this::EXIT_SUCCESS);
+      }
+      else {
+        $this->signalTermReceived = TRUE;
+      }
+    }
+    
+    // All other signals handled here.
+    switch ($signo) {
+      case SIGUSR1:
+        $this->logger->debug("Received SIGUSR1.");
+        break;
+      case SIGALRM:
+        $this->logger->debug("Received SIGALARM.");
+        break;
+      default:
+        // Unknown signal received.
+        break;
     }
   }
   
