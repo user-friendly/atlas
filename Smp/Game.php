@@ -297,7 +297,7 @@ class Game {
       }
     } // while ($this->run)
     
-    $run_time = \time() - $run_time_start + (3600 * 128);
+    $run_time = \time() - $run_time_start;
     
     $actual_ticks_per_second = $ticks_count / $run_time;
     $this->logger->debug("Actual tps ~ " . Utility::formatNumber($actual_ticks_per_second));
