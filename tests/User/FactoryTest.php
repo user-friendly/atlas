@@ -37,7 +37,7 @@ final class FactoryTest extends BaseTest {
     $temp_user = $factory->createTemporary();
     
     $this->assertIsInt($temp_user->getId(), "Temp user id is an int.");
-    $this->assertSame(0, $temp_user->getId(), "Temp user has the correct id.");
+    $this->assertGreaterThanOrEqual(User::MIN_ID, $temp_user->getId(), "Temp user has valid id.");
     $this->assertSame(UserFactory::TEMP_USERNAME, $temp_user->getUsername(), "Temp user has the correct username.");
     $this->assertNull($temp_user->getPassword(), "Temp user has NULL password.");
     $this->assertEmpty($temp_user->getContext(), "Temp user has an empty context.");

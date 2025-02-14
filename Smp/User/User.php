@@ -25,6 +25,16 @@ use Smp\Entity;
 class User implements Entity {
   use LoggerTrait;
   
+  /**
+   * Minimum user id.
+   * 
+   * Applies for regular users. This ensures there are some
+   * amount of reserved ids.
+   * 
+   * @var integer
+   */
+  const MIN_ID = 1000;
+  
   protected $id = 0;
   protected $username = NULL;
   protected $password = NULL;
@@ -42,6 +52,10 @@ class User implements Entity {
   public function __construct(int $id, string $username) {
     LoggerFactory::init();
     $this->logger = static::getLogger();
+    
+    if ($id < $this::MIN_ID) {
+      throw new \RuntimeException("User id must be greater than or equal to " . $this::MIN_ID . ".");
+    }
     
     $this->id = $id;
     $this->username = $username;

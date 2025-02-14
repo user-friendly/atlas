@@ -47,7 +47,7 @@ class Database implements \Iterator, Countable, EntityStore {
    * @return int
    */
   public function getNextId() : int {
-    return 1 + \max(\array_merge([0], \array_keys($this->users)));
+    return 1 + \max(\array_merge([User::MIN_ID - 1], \array_keys($this->users)));
   }
   
   /**

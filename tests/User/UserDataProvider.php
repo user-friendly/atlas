@@ -1,6 +1,7 @@
 <?php
 namespace Smp\tests\User;
 
+use Smp\User\User;
 use Smp\User\UserState;
 use Smp\User\Factory as UserFactory;
 
@@ -12,11 +13,11 @@ final class UserDataProvider {
   
   private static $rawUserData = [
     // user, password, context
-    [1, 'user1', '123', [], UserState::Game],
-    [2, 'user2', '456', [], UserState::Game],
-    [8, 'johndoe', 'qwe123', [], UserState::Login],
-    [256, 'user3', 'qwerty', [], UserState::Game],
-    [1024, 'user3', NULL, [], UserState::Login],
+    [User::MIN_ID, 'user1', '123', [], UserState::Game],
+    [User::MIN_ID + 2, 'user2', '456', [], UserState::Game],
+    [User::MIN_ID + 8, 'johndoe', 'qwe123', [], UserState::Login],
+    [User::MIN_ID + 256, 'user3', 'qwerty', [], UserState::Game],
+    [User::MIN_ID + 1024, 'user3', NULL, [], UserState::Login],
   ];
   
   /**

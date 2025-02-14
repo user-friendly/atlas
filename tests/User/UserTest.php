@@ -22,13 +22,14 @@ use Smp\User\UserState;
 final class UserTest extends BaseTest {
   public function testUserNew() : void {
     $context = ['a', 'b'];
-    $user = new User(1, "tester");
+    $uid = User::MIN_ID;
+    $user = new User($uid, "tester");
     
     $user->setPassword('123');
     $user->setContext($context);
     $user->setState(UserState::Game);
     
-    $this->assertSame(1, $user->getId(), "New user has the correct id.");
+    $this->assertSame($uid, $user->getId(), "New user has the correct id.");
     $this->assertSame("tester", $user->getUsername(), "New user has the correct username.");
     $this->assertSame("123", $user->getPassword(), "New user has the correct password.");
     

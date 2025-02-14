@@ -43,10 +43,10 @@ class Factory {
    * Create a temporary user.
    * 
    * @param number $id
-   *   Optional. User id. Defaults to 0.
+   *   Optional. User id. Defaults to User::MIN_ID.
    * @return \Smp\User\User
    */
-  public function createTemporary($id = 0) {
+  public function createTemporary($id = User::MIN_ID) {
     return $this->create($id, $this::TEMP_USERNAME);
   }
 }
