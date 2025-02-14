@@ -287,7 +287,7 @@ class Game {
       // Accept new connections, receive & send, cleanup disconnected clients (once every N seconds).
       $this->server->run();
       
-      // *** Handle RAW INPUT ***
+      // *** START Handle RAW INPUT ***
       if (0 < count($this->clientToUser)) {
         foreach ($this->server->input() as $cid => $input) {
           
@@ -330,9 +330,9 @@ class Game {
             }
           }
         }
-      }
+      } // *** END Handle RAW INPUT ***
       
-      // *** Handle UI inputs. ***
+      // *** START Handle UI inputs. ***
       // TODO Text batching of command execution.
       // TODO Execute commands based on cycles left (of the frame) instead of ... magic const.
       $max = 8;
@@ -358,13 +358,19 @@ class Game {
       if (DEBUG && $cmds_executed > 0) {
         $this->logger->debug("Executed a batch of $cmds_executed commands.");
       }
+      // *** END Handle UI inputs. ***
       
-      // *** Handle RAW OUTPUT ***
+      // *** START Handle Game mechanics. ***
+      // TODO Implement. Hah, easy!
+      // *** END Handle Game mechanics. ***
+      
+      // *** START Handle RAW OUTPUT ***
       if (0 < count($this->userToClient)) {
         foreach ($this->outputUi->processOutput() as $uid => $text) {
           $this->server->output($this->userToClient[$uid], $text);
         }
       }
+      // *** END Handle RAW OUTPUT ***
       
       $this->tickCount += 1;
       

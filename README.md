@@ -70,8 +70,6 @@ Sometime into the future it can be a graphical frontend, which could be a combin
 
 ~Ui class can have the user menu state? Or is it the game state? Should the state be stored in the Ui manager object, just like the password in the User manager? Map vs a user object member?~
 
-
-
 ### Elements
 
 User interface elements (or widgets, menus, windows, etc). See [List of GUI elements](https://en.wikipedia.org/wiki/List_of_graphical_user_interface_elements) for examples.
@@ -79,10 +77,6 @@ User interface elements (or widgets, menus, windows, etc). See [List of GUI elem
 Login widget, which is a sequence of inputs. Finite state machine? No - use a stack.
 
 Character creation widget (at first it should just be nickname). Same thing - use a stack.
-
-## Input System
-
-Input system has Text input class. How ill the network system feed text into the Text input class? Input system is basically the opposite of the Renderer system? (What? Opposite?) On the "left side" it should have the same access as the Render system (see diagram on real life notepad).
 
 ## User
 
@@ -111,7 +105,7 @@ How will the transition of a temporary user to a logged in user be implemented?
 
 Communication between (game engine) systems - how? Event queue or direct member calls? [Event Driven Comms - Yes or No?](https://gamedev.stackexchange.com/questions/7718/event-driven-communication-in-a-game-engine-yes-or-no)
 
-What are the benefits of an event queue? User chat, in case of a graphical renderer. (what? user chat, what?) THere will be implicit queues, besides a dedicated event system. (Surely, it can't be one generic event queue for all systems? Performance?)
+What are the benefits of an event queue? User chat, in case of a graphical renderer. (what? user chat, what?) There will be implicit queues, besides a dedicated event system. (Surely, it can't be one generic event queue for all systems? Performance?)
 
 Fixed size arrays might be the way to go (if going with C/C++).
 
