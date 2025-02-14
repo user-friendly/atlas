@@ -271,19 +271,18 @@ class Game {
     $this->server->setListenerConnected(array($this, 'handleClientConnected'));
     $this->server->setListenerDisconnected(array($this, 'handleClientDisconnected'));
     
-    // Requested nano time per tick.
-    
     $this->logger->debug("Requested tps: " . Utility::formatNumber($this->tickSecond));
     $this->logger->debug("Requested nano per tick: " . Utility::formatNumber($this->tickNano));
     
     $this->tickCount = 0;
     
-    $this->logger->debug("Start main game loop.");
+    $this->logger->debug("Run game...");
+    // *** START Main Game Loop ***
     while ($this->run) {
       $time_tick_start = Utility::getTimeHR();
       
-      // Profile ticks.
-      $this->stats->profileTick($this->tickTime);
+      // Profile step.
+      $this->stats->profileGameLoop($this->tickTime);
       
       // Accept new connections, receive & send, cleanup disconnected clients (once every N seconds).
       $this->server->run();
@@ -380,11 +379,11 @@ class Game {
           $wait_counter += 1;
         }
       }
-    } // while ($this->run)
+    } // *** END Main Game Loop ***
     
     $run_time = \time() - $run_time_start;
     
-    $actual_ticks_per_second = $this->tickCount / $run_time;
+    $actual_ticks_per_second = $this->tickCount / \max($run_time, 1);
     $this->logger->debug("Actual tps ~ " . Utility::formatNumber($actual_ticks_per_second));
     $this->logger->debug("Total ticks should be ~ " . Utility::formatNumber($run_time * $this->tickSecond));
     

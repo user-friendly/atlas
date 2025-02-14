@@ -57,7 +57,12 @@ class GameStats {
     $this->timer = Utility::getTime();
   }
   
-  public function profileTick(int $time) {
+  /**
+   * Record game loop stats.
+   * 
+   * @param int $time
+   */
+  public function profileGameLoop(int $time) {
     $this->ticksTimeMean += $time;
     $this->ticksMeanCount += 1;
     if ($this->ticksMeanCount >= $this->ticksMeanFlush) {
