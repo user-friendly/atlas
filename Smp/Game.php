@@ -433,11 +433,17 @@ class Game {
     // Link user to client.
     $this->associateUserClient($uid, $net_id);
     
-    // FIXME Convert to some sort of a command/game event?
-    $this->outputUi->println($uid, "Welcome to SMP!");
-    $this->outputUi->println($uid, "");
-    $this->outputUi->println($uid, "You can use the following commands: say, quit, rename.");
-    $this->outputUi->println($uid, "");
+    $welcome_message = [
+      "Welcome to SMP!",
+      "",
+      "You can use the following commands: say, quit, rename.",
+      "",
+    ];
+    
+    $command = new Message();
+    $command->setContext(\array_merge(['game' => $this, 'uid' => NULL, 'to_uids' => [$uid]]));
+    $command->setArguments($welcome_message);
+    $this->commands->enqueue($command);
   }
   
   public function requestDisconnect($uid) : bool {
