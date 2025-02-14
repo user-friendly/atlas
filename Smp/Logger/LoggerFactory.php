@@ -6,8 +6,7 @@
 
 namespace Smp\Logger;
 
-use Monolog\Logger;
-use \Monolog\Handler\StreamHandler;
+use Monolog\Handler\StreamHandler;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Level;
 
@@ -61,30 +60,3 @@ class LoggerFactory {
     }
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
