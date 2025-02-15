@@ -20,7 +20,7 @@ use Smp\EntityStore;
  * Stores users in memory and, in the future, syncs with
  * persistent storage.
  */
-class Database implements \Iterator, Countable, EntityStore {
+class Database implements \Iterator, \Countable, EntityStore {
   use LoggerTrait;
   
   /**
