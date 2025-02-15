@@ -7,23 +7,26 @@ Simple MUD in PHP.
 1. Basic RPG - no particular setting yet.
 2. Transient DB - everything is lost on restart.
 3. Multiplayer, aim to support 100+ players at one time.
-4. Concentrate more on software design.
+4. Do not over-complicate.
+5. Can be ported to C/C++.
 
-## ARCHITECTURE
+## Architecture
 
 Overview of the components involved.
 
 ![Architecture Diagram](doc/architecture.png "Architecture Diagram")
 
-1. Do not overcomplicate.
-2. Can be ported to C/C++.
-3. What is the most important thing to concentrate on? Project Goals?
-
-Prefer unsigned integer ids over UUIDs or other strings. Use UUIDs only for objects that need to be shared in a database or across application services.
+1. Game mechanics.
+2. Network server.
+3. Communication.
+	- Input UI is plain text, via the network server component.
+	- Output UI is plain text, same as input.
+4. User management.
+	- Each user will have an account. Is a user synonym for account?
+	- Authentication & authorization.
+	- Ties together the network client & player entity, via a user.
 
 ## Design By ChatGPT
-
-...reasoning, spit out:
 
 ### World Model
 
@@ -71,7 +74,7 @@ Representation of the Game World.
 
 ---
 
-### The Main Game Loop (Simplified):
+### Game Loop (Simplified):
 
 1. Input Capture:
 	- Listen for incoming player commands.
@@ -93,6 +96,12 @@ Representation of the Game World.
 ---
 
 In essence, the world model is the underlying data structure that defines every aspect of the game’s universe, while the game logic is the set of rules and routines that interpret player actions, modify the world model, and drive the game forward. Together, they form a responsive and dynamic engine that underpins the MUD experience.
+
+---
+
+Personal notes:
+	- The "Game Logic" section looks a bit off. But it is more of a general description. Overall it helps clear things up.
+	- The "Game Loop"'s "Game Logic Execution" steps look out of order. Perhaps, event processing should create actions and enqueue them, if events are triggered. Otherwise, keep tracking the events -> validate enqueued action(s) -> execute action(s).
 
 ---
 
@@ -177,6 +186,8 @@ Universe, world, continent, & chunk **must** be entities.
 Rooms **must** be entities.
 
 ## Entities
+
+Prefer unsigned integer ids over UUIDs or other strings. Use UUIDs only for objects that need to be shared in a database or across application services.
 
 - Base class (abstract, interface) for all game objects, in the context of game mechanics, not sound, not FX, not textures, not mesh, etc.
 - Use components? Gets too complicated? Inheritance can get troublesome.
