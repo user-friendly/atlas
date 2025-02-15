@@ -6,13 +6,13 @@
 
 Representation of the Game World.
 
-	- Rooms/Locations:
+- Rooms/Locations:
 	The game world is divided into discrete areas or "rooms." Each room holds information such as a unique ID, descriptions, exits (links to other rooms), and any objects or characters present.
-	- Entities & Objects:
+- Entities & Objects:
 	All in-game entities—whether player characters, non-player characters (NPCs), or items—are defined in data structures. These might include attributes like health, inventory, status effects, and relationships to the environment.
-	- Graph Structure:
+- Graph Structure:
 	Often, rooms are interconnected in a graph-like structure where nodes represent rooms and edges represent pathways (exits) between them. This enables efficient navigation and spatial reasoning within the game world.
-	- Dynamic State:
+- Dynamic State:
 	The world model is dynamic; it holds both the static layout (the blueprint of the world) and the dynamic state (current positions, ongoing effects, temporary changes).
 
 ---
