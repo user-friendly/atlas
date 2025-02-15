@@ -39,6 +39,14 @@ the game server is going to be running on say AWS, this might cause major issues
 Consider implementing throttling when the game is idle, i.e. no players are connected. It will have
 an impact on profiling and have to figure out how the simulation steps will be done.
 
+# Refactor
+
+## Textual UI
+
+The Input/Output UI classes can keep track of the network client to user associations.
+
+Currently, the Output UI class aggregates the messages to be sent to individual users. The Game class then resolves the user to network client association and sends the raw input to the network server, identified by the client id.
+
 # TELNET NOTES
 
 hex => decimal => char
