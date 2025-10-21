@@ -5,7 +5,7 @@
  * Quit command class file.
  */
 
-namespace Smp\Ui\Command;
+namespace Smp\Command;
 
 use Smp\Utility;
 use Smp\Game;
@@ -35,7 +35,7 @@ final class Quit extends Command {
   
   /**
    * {@inheritdoc}
-   * @see \Smp\Ui\Command\Command::__construct()
+   * @see \Smp\Command\Command::__construct()
    */
   public function __construct() {
     parent::__construct(static::name(), Utility::t('Quit the game.'));
@@ -43,7 +43,7 @@ final class Quit extends Command {
   
   /**
    * {@inheritdoc}
-   * @see \Smp\Ui\Command\Command::execute()
+   * @see \Smp\Command\Command::execute()
    */
   public function execute(): self {
     if (isset($this->context['uid']) && isset($this->context['game'])) {

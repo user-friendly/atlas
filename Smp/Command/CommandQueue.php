@@ -7,7 +7,7 @@
  * TODO Might want to consider a priority queue, for admins.
  */
 
-namespace Smp\Ui\Command;
+namespace Smp\Command;
 
 use Smp\Logger\LoggerTrait;
 use Smp\Logger\LoggerFactory;

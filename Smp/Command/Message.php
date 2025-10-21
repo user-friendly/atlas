@@ -6,7 +6,7 @@
  * Message command class file.
  */
 
-namespace Smp\Ui\Command;
+namespace Smp\Command;
 
 use Smp\Game;
 use Smp\Utility;
@@ -36,7 +36,7 @@ final class Message extends Command {
   
   /**
    * {@inheritdoc}
-   * @see \Smp\Ui\Command\Command::__construct()
+   * @see \Smp\Command\Command::__construct()
    */
   public function __construct() {
     parent::__construct(static::name(), Utility::t('Send an informational message to a user.'));
@@ -44,7 +44,7 @@ final class Message extends Command {
   
   /**
    * {@inheritdoc}
-   * @see \Smp\Ui\Command\Command::execute()
+   * @see \Smp\Command\Command::execute()
    */
   public function execute(): self {
     if (isset($this->context['to_uids']) && isset($this->context['game'])) {

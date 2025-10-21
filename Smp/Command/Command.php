@@ -5,7 +5,7 @@
  * Command class file.
  */
 
-namespace Smp\Ui\Command;
+namespace Smp\Command;
 
 use Smp\Logger\LoggerTrait;
 use Smp\Logger\LoggerFactory;
@@ -22,7 +22,7 @@ abstract class Command {
    * 
    * Keyed by command name.
    * 
-   * @var array<string, Smp\Ui\Command\Command>
+   * @var array<string, Smp\Command\Command>
    */
   private static array $commands = [];
   

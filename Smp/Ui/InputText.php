@@ -12,8 +12,8 @@ namespace Smp\Ui;
 
 use Smp\Logger\LoggerTrait;
 use Smp\Logger\LoggerFactory;
-use Smp\Ui\Command\Command;
-use Smp\Ui\Command\Message;
+use Smp\Command\Command;
+use Smp\Command\Message;
 
 /**
  * Output handler for text UI.
@@ -62,7 +62,7 @@ class InputText {
    * @param array $tokens
    *   An array of tokens (basically an array of strings).
    *   @see InputText::processVariableInput()
-   * @return \Smp\Ui\Command\Command|NULL
+   * @return \Smp\Command\Command|NULL
    */
   public function processCommand(array $tokens) {
     
