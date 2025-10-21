@@ -41,6 +41,9 @@ an impact on profiling and have to figure out how the simulation steps will be d
 
 # Refactor
 
+Alpha4 will take a major shift towards decreasing abstractions. This looks over-engineered already. Add complexity when needed.
+Of course, it could make it difficult to introduce it back later on, but I'll cross that bridge when it comes to it.
+
 ## Textual UI
 
 The Input/Output UI classes can keep track of the network client to user associations.
