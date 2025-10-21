@@ -294,14 +294,6 @@ class Game {
           $uid = $this->clientToUser[$cid];
           $inputs = [];
           
-          try {
-            // Tokenize input. Basically, breaks it down to commands.
-            $inputs = $this->inputUi->processInput($input);
-          } catch (\Exception $e) {
-            $this->logger->error("Failed to process input from user (client id $cid, user id: $uid).", ['exceptoin' => $e]);
-            continue;
-          }
-          
           $context = [
             // Client id.
             'cid' => $cid,
@@ -313,20 +305,9 @@ class Game {
             'game' => $this,
           ];
           
-          foreach ($inputs as $tokens) {
-            if ($command = $this->inputUi->processCommand($tokens)) {
-              $command->setContext($context);
+          foreach ($this->inputUi->processInput($input, $uid, $context) as $command) {
+            if ($command) {
               $this->commands->enqueue($command);
-            }
-            else {
-              $command = new Message();
-              $command->setContext(\array_merge($context, ['uid' => NULL, 'to_uids' => [$uid]]));
-              $command->setArguments(["Command '{$tokens[0]}' not found."]);
-              $this->commands->enqueue($command);
-              
-              if (DEBUG) {
-                $this->logger->debug("User ($uid) executed an invalid command: {$tokens[0]}");
-              }
             }
           }
         }

@@ -5,7 +5,7 @@
  * Tokenizer class file.
  */
 
-namespace Smp\Ui\Command;
+namespace Smp\Ui;
 
 use Smp\Logger\LoggerTrait;
 use Smp\Logger\LoggerFactory;
@@ -88,9 +88,9 @@ class Tokenizer {
    * Returns an array of tokenized commands.
    *
    * @param string $input
-   * @return array<int, array<string>>
+   * @return array<int, array<string>>|false
    */
-  public function process(string $input) : array {
+  public function process(string $input) : array|FALSE {
     $commands = [];
     $tokens = [];
     $token = "";
@@ -126,7 +126,8 @@ class Tokenizer {
             $stateNext = self::STATE_TOKEN;
           }
           else {
-            throw new \RuntimeException("Invalid input character [{$d}] at position {$i}.");
+            $this->logger->warning("Invalid input character [{$d}] at position {$i}.");
+            return FALSE;
           }
           
           break;
@@ -235,7 +236,8 @@ class Tokenizer {
           break;
           
         default:
-          throw new \Exception("Invalid tokenizer state: {$state}");
+          $this->logger->warning("Invalid tokenizer state: {$state}");
+          return FALSE;
           break;
       }
       
@@ -255,7 +257,8 @@ class Tokenizer {
       }
     }
     else {
-      throw new \Exception("Invalid closing tokenizer state: {$state}");
+      $this->logger->warning("Invalid closing tokenizer state: {$state}");
+      return FALSE;
     }
     
     return $commands;
