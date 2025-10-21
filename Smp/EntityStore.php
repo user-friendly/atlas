@@ -19,7 +19,7 @@ namespace Smp;
  * would require all classes that have references to be notified.
  * Seems like a nightmare to do. 
  */
-interface EntityStore {
+interface EntityStore extends \Iterator, \Countable {
   /**
    * Create.
    * 

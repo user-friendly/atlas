@@ -64,7 +64,7 @@ final class Message extends Command {
         $prefix = $user->getUsername() . ' ';
       }
       
-      $message = \trim(\implode(' ', $this->getArguments()));
+      $message = \implode("\n", $this->getArguments());
       
       foreach ($to_users as $user) {
         $outputUi->println($user->getId(), "{$prefix}{$message}");

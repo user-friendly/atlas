@@ -36,7 +36,7 @@ use Smp\User\UserState;
 class Game {
   use LoggerTrait;
   
-  const VERSION = '1.0.0-alpha2';
+  const VERSION = '1.0.0-alpha3';
   
   const EXIT_SUCCESS = 0;
   const EXIT_FAILURE = 1;
@@ -104,6 +104,40 @@ class Game {
   protected $commands;
   
   /**
+   * Desired ticks per second.
+   * 
+   * These are the requested ticks per second of the engine - it is not a guarantee.
+   * Should be set to a sensible value, probably in the range of 30 - 120.   
+   * 
+   * @var integer
+   */
+  protected $tickSecond = 240;
+  /**
+   * Desired nanoseconds per tick.
+   * 
+   * Must be calculated off of desired ticks per second.
+   * 
+   * @var integer
+   */
+  protected $tickNano = 0;
+  
+  /**
+   * Nanoseconds time of the last tick.
+   * 
+   * Excludes busy-wait time.
+   * 
+   * @var integer
+   */
+  protected $tickTime = 0;
+  
+  /**
+   * Total ticks ticked.
+   * 
+   * @var integer
+   */
+  protected $tickCount = 0;
+  
+  /**
    * Maps network/game clients to users.
    * 
    * The key is the client id. Value is user id.
@@ -120,6 +154,13 @@ class Game {
    * @var array
    */
   protected $userToClient = [];
+  
+  /**
+   * Profiler.
+   * 
+   * @var GameStats
+   */
+  protected $stats;
   
   protected function associateUserClient($uid, $cid) {
     $this->userToClient[$uid] = $cid;
@@ -195,7 +236,7 @@ class Game {
     $this->logger = static::getLogger();
     
     $this->setupSignalHandling();
-        
+    
     $this->userFactory = new UserFactory();
     
     $this->users = new UserDatabase();
@@ -205,6 +246,12 @@ class Game {
     
     // TODO Is this queue supposed to be here?
     $this->commands = new CommandQueue();
+    
+    // Tick setup.
+    $this->tickNano = (int) (Utility::NANO_SECOND / $this->tickSecond);
+    
+    // Profiler should be setup last.
+    $this->stats = new GameStats($this->tickSecond);
   }
   
   /**
@@ -215,50 +262,32 @@ class Game {
   public function run() : int {
     $run_time_start = \time();
     
+    $this->logger->info("Simple MUD in PHP.");
+    $this->logger->info("Version: " . $this::VERSION);
+    
     // Initialize & start listening for connections.
     $this->server = new Network\Server();
     
     $this->server->setListenerConnected(array($this, 'handleClientConnected'));
     $this->server->setListenerDisconnected(array($this, 'handleClientDisconnected'));
     
-    // Tick time excludes forced wait.
-    $time_tick = 0;
-    // Requested ticks per second.
-    $req_ticks_per_sec = 240;
-    // Requested nano time per tick.
-    $req_time_per_tick = (int) (1e9 / $req_ticks_per_sec);
+    $this->logger->debug("Requested tps: " . Utility::formatNumber($this->tickSecond));
+    $this->logger->debug("Requested nano per tick: " . Utility::formatNumber($this->tickNano));
     
-    $this->logger->debug("Requested tps: " . Utility::formatNumber($req_ticks_per_sec));
-    $this->logger->debug("Requested nano per tick: " . Utility::formatNumber($req_time_per_tick));
+    $this->tickCount = 0;
     
-    $ticks_count = 0;
-    $ticks_time_mean = 0;
-    // Reset mean every N ticks.
-    $ticks_mean_flush = 60 * $req_ticks_per_sec;
-    $ticks_mean_count = 0;
-    
-    $this->logger->debug("Start main game loop.");
+    $this->logger->debug("Run game...");
+    // *** START Main Game Loop ***
     while ($this->run) {
       $time_tick_start = Utility::getTimeHR();
       
-      // *** Tick reporting. ***
-      $ticks_time_mean += $time_tick;
-      // if ($ticks_count % $ticks_mean_flush == 0) {
-      if (++$ticks_mean_count >= $ticks_mean_flush) {
-        $ticks_time_mean = (int) ($ticks_time_mean / $ticks_mean_flush);
-        $dbg_ticks_time_mean = Utility::formatTimeHR($ticks_time_mean);
-        $this->logger->debug("Mean tick time: $dbg_ticks_time_mean (total ns: $ticks_time_mean)");
-        $ticks_time_mean = 0;
-        
-        $ticks_mean_count = 0;
-      }
-      
-      // \time_nanosleep(0, 15_833_333);
+      // Profile step.
+      $this->stats->profileGameLoop($this->tickTime);
       
       // Accept new connections, receive & send, cleanup disconnected clients (once every N seconds).
       $this->server->run();
       
-      // *** Handle RAW INPUT ***
+      // *** START Handle RAW INPUT ***
       if (0 < count($this->clientToUser)) {
         foreach ($this->server->input() as $cid => $input) {
           
@@ -301,9 +330,9 @@ class Game {
             }
           }
         }
-      }
+      } // *** END Handle RAW INPUT ***
       
-      // *** Handle UI inputs. ***
+      // *** START Handle UI inputs. ***
       // TODO Text batching of command execution.
       // TODO Execute commands based on cycles left (of the frame) instead of ... magic const.
       $max = 8;
@@ -329,37 +358,42 @@ class Game {
       if (DEBUG && $cmds_executed > 0) {
         $this->logger->debug("Executed a batch of $cmds_executed commands.");
       }
+      // *** END Handle UI inputs. ***
       
-      // *** Handle RAW OUTPUT ***
+      // *** START Handle Game mechanics. ***
+      // TODO Implement. Hah, easy!
+      // *** END Handle Game mechanics. ***
+      
+      // *** START Handle RAW OUTPUT ***
       if (0 < count($this->userToClient)) {
         foreach ($this->outputUi->processOutput() as $uid => $text) {
           $this->server->output($this->userToClient[$uid], $text);
         }
       }
+      // *** END Handle RAW OUTPUT ***
       
-      $ticks_count += 1;
+      $this->tickCount += 1;
       
-      $time_tick = Utility::getTimeHR() - $time_tick_start;
+      $this->tickTime = Utility::getTimeHR() - $time_tick_start;
       
-      // Busy-wait (approx) requested ticks per second.
-      // $this->logger->debug("Tick time: $time_tick ns");
-      if ($req_time_per_tick > $time_tick) {
-        // $this->logger->debug("Wait for: " . ($req_time_per_tick - $time_tick) . " ns");
-        $sleep_till = Utility::getTimeHR() + ($req_time_per_tick - $time_tick);
+      // Busy-wait requested ticks per second, if finished early.
+      if ($this->tickNano > $this->tickTime) {
+        $sleep_till = Utility::getTimeHR() + ($this->tickNano - $this->tickTime);
+        // \time_nanosleep(0, ($this->tickNano - $this->tickTime));
         $wait_counter = 0;
         while($sleep_till > Utility::getTimeHR()) {
           $wait_counter += 1;
         }
       }
-    } // while ($this->run)
+    } // *** END Main Game Loop ***
     
     $run_time = \time() - $run_time_start;
     
-    $actual_ticks_per_second = $ticks_count / $run_time;
+    $actual_ticks_per_second = $this->tickCount / \max($run_time, 1);
     $this->logger->debug("Actual tps ~ " . Utility::formatNumber($actual_ticks_per_second));
-    $this->logger->debug("Total ticks: " . Utility::formatNumber($ticks_count));
-    $this->logger->debug("Should be ~ " . Utility::formatNumber($run_time * $req_ticks_per_sec));
+    $this->logger->debug("Total ticks should be ~ " . Utility::formatNumber($run_time * $this->tickSecond));
     
+    $this->logger->info("Total ticks: " . Utility::formatNumber($this->tickCount));
     $run_time_h = Utility::formatSeconds($run_time);
     $this->logger->info("Runtime: $run_time_h ($run_time s)");
     
@@ -399,11 +433,17 @@ class Game {
     // Link user to client.
     $this->associateUserClient($uid, $net_id);
     
-    // FIXME Convert to some sort of a command/game event?
-    $this->outputUi->println($uid, "Welcome to SMP!");
-    $this->outputUi->println($uid, "");
-    $this->outputUi->println($uid, "You can use the following commands: say, quit, rename.");
-    $this->outputUi->println($uid, "");
+    $welcome_message = [
+      "Welcome to SMP!",
+      "",
+      "You can use the following commands: say, quit, rename.",
+      "",
+    ];
+    
+    $command = new Message();
+    $command->setContext(\array_merge(['game' => $this, 'uid' => NULL, 'to_uids' => [$uid]]));
+    $command->setArguments($welcome_message);
+    $this->commands->enqueue($command);
   }
   
   public function requestDisconnect($uid) : bool {

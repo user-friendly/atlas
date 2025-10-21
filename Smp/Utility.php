@@ -62,13 +62,13 @@ class Utility {
   }
   
   // Seconds per units of time.
-  protected const SECONDS_HOUR = 3600;
-  protected const SECONDS_DAY = 86_400;
+  public const SECONDS_HOUR = 3600;
+  public const SECONDS_DAY = 86_400;
   
   // Nanoseconds contained within the other time units.
-  protected const NANO_SECOND = 1_000_000_000; // 1e9;
-  protected const NANO_MILI = 1_000_000; // 1e6;
-  protected const NANO_MICRO = 1_000; // 1e3;
+  public const NANO_SECOND = 1_000_000_000; // 1e9;
+  public const NANO_MILI = 1_000_000; // 1e6;
+  public const NANO_MICRO = 1_000; // 1e3;
   
   /**
    * Generate debug string for high resolution time. 

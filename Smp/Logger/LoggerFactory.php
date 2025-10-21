@@ -6,9 +6,9 @@
 
 namespace Smp\Logger;
 
-use Monolog\Logger;
-use \Monolog\Handler\StreamHandler;
+use Monolog\Handler\StreamHandler;
 use Monolog\Formatter\LineFormatter;
+use Monolog\Level;
 
 /**
  * LoggerFactory class.
@@ -48,7 +48,7 @@ class LoggerFactory {
     if (empty(static::$loggersHandlersDefault)) {
       // Get log level from configurations (include cmd line args) and override
       // this value.
-      $log_level = DEBUG ? Logger::DEBUG : Logger::WARNING;
+      $log_level = DEBUG ? Level::Debug : Level::Info;
       $log_file = DEBUG ? STDOUT : STDERR;
       
       $stream_handler = new StreamHandler($log_file, $log_level);
@@ -60,30 +60,3 @@ class LoggerFactory {
     }
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

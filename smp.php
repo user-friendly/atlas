@@ -4,7 +4,7 @@
  * Main executable.
  */
 
-// FIXME Remove, at first alpha version.
+// FIXME Remove, at first beta version.
 define('DEBUG', TRUE);
 
 require __DIR__ . '/vendor/autoload.php';

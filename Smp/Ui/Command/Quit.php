@@ -13,6 +13,8 @@ use Smp\Game;
 /**
  * Quit command.
  * 
+ * FIXME Clear queued commands after this one.
+ * 
  * Context keys:
  *   'user': The user to perform the quit command on.
  */
@@ -54,7 +56,7 @@ final class Quit extends Command {
       
       // Do some cleanup and stuff... maybe even add a command or something.
       
-      // FIXME Return a messge command maybe? And have the broadcast flag there.
+      // FIXME Return a message command maybe? And have the broadcast flag there.
       if ($boradcast) {
         $outputUi = $game->getOutputUi();
         $quitter = $game->getUsers()->get($uid)->getUsername();
@@ -68,6 +70,7 @@ final class Quit extends Command {
         }
       }
       $game->requestDisconnect($uid);
+      $this->logger->warning("FIXME User $uid ($quitter) requested to logout, however any queued commands will still be executed!");
     }
     else {
       $this->logger->error("User, & Game context is required, but was not found.");

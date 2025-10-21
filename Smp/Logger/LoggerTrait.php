@@ -28,4 +28,3 @@ trait LoggerTrait {
     return LoggerFactory::getLogger($channel);
   }
 }
-
