@@ -36,7 +36,7 @@ class InputText {
   public function processInput($bytes, $uid, $context) {
     $inputs = $this->tokenizer->process($bytes);
     // TODO This is a weird way of passing down the error state.
-    if (!$inputs) {
+    if ($inputs === FALSE) {
       $command = new Message();
       $command->setContext(\array_merge($context, ['uid' => NULL, 'to_uids' => [$uid]]));
       $command->setArguments(["Command is malformed. Are you up to something?"]);
@@ -45,6 +45,7 @@ class InputText {
     }
     foreach ($inputs as $tokens) {
       if ($command = Command::create($tokens[0])) {
+        $command->setContext($context);
         $command->setArguments(\array_slice($tokens, 1));
       } else {
         $command = new Message();
