@@ -36,6 +36,8 @@ use Smp\User\UserState;
 class Game {
   use LoggerTrait;
   
+  static protected $instance = NULL;
+  
   const VERSION = '1.0.0-alpha3';
   
   const EXIT_SUCCESS = 0;
@@ -162,6 +164,10 @@ class Game {
    */
   protected $stats;
   
+  static public function getInstance() : Game {
+    return self::$instance;
+  }
+  
   protected function associateUserClient($uid, $cid) {
     $this->userToClient[$uid] = $cid;
     $this->clientToUser[$cid] = $uid;
@@ -232,6 +238,10 @@ class Game {
   }
   
   public function __construct() {
+    if (self::$instance) {
+      throw new \RuntimeException("There can be only ONE instance of the game running.");
+    }
+    
     LoggerFactory::init();
     $this->logger = static::getLogger();
     
@@ -252,6 +262,8 @@ class Game {
     
     // Profiler should be setup last.
     $this->stats = new GameStats($this->tickSecond);
+    
+    self::$instance = $this;
   }
   
   /**
