@@ -8,7 +8,6 @@
 namespace Smp\Command;
 
 use Smp\Utility;
-use Smp\Game;
 
 /**
  * Quit command.
@@ -46,11 +45,7 @@ final class Quit extends Command {
    * @see \Smp\Command\Command::execute()
    */
   public function execute(): self {
-    if (isset($this->context['uid']) && isset($this->context['game'])) {
-      /**
-       * @var Game $game
-       */
-      $game = $this->context['game'];
+    if (isset($this->context['uid'])) {
       $uid = $this->context['uid'];
       $boradcast = isset($this->context['broadcast']) ? $this->context['broadcast'] : TRUE;
       
@@ -58,9 +53,9 @@ final class Quit extends Command {
       
       // FIXME Return a message command maybe? And have the broadcast flag there.
       if ($boradcast) {
-        $outputUi = $game->getOutputUi();
-        $quitter = $game->getUsers()->get($uid)->getUsername();
-        foreach ($game->getUsers() as $recipient_id => $user) {
+        $outputUi = $this->game->getOutputUi();
+        $quitter = $this->game->getUsers()->get($uid)->getUsername();
+        foreach ($this->game->getUsers() as $recipient_id => $user) {
           if ($uid == $recipient_id) {
             $outputUi->println($recipient_id, "Bye! Hope to see you soon.");
           }
@@ -69,11 +64,11 @@ final class Quit extends Command {
           }
         }
       }
-      $game->requestDisconnect($uid);
+      $this->game->requestDisconnect($uid);
       $this->logger->warning("FIXME User $uid ($quitter) requested to logout, however any queued commands will still be executed!");
     }
     else {
-      $this->logger->error("User, & Game context is required, but was not found.");
+      $this->logger->error("User context is required, but was not found.");
     }
     return $this;
   }

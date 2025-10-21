@@ -10,6 +10,7 @@ namespace Smp\Command;
 use Smp\Logger\LoggerTrait;
 use Smp\Logger\LoggerFactory;
 use Smp\Utility;
+use Smp\Game;
 
 /**
  * Base command class.
@@ -135,6 +136,16 @@ abstract class Command {
    */
   protected string $desc;
   
+  
+  /**
+   * Game reference.
+   * 
+   * All commands will use it, basically.
+   * 
+   * @var \Smp\Game
+   */
+  protected Game $game;
+  
   /**
    * Command arguments.
    * 
@@ -168,6 +179,7 @@ abstract class Command {
     
     $this->name = $name ? $name : Utility::t('undefined');
     $this->desc = $desc ? $desc : Utility::t('This is an undefined command.');
+    $this->game = Game::getInstance();
   }
   
   /**

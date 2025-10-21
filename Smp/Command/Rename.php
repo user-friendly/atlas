@@ -7,7 +7,6 @@
 
 namespace Smp\Command;
 
-use Smp\Game;
 use Smp\Utility;
 
 /**
@@ -36,16 +35,12 @@ final class Rename extends Command {
    * @see \Smp\Command\Command::execute()
    */
   public function execute(): self {
-    if (isset($this->context['uid']) && isset($this->context['game'])) {
+    if (isset($this->context['uid'])) {
       if (empty($this->args)) {
         throw new \RuntimeException("No username provided.");
       }
       
-      /**
-       * @var Game $game
-       */
-      $game = $this->context['game'];
-      $user = $game->getUsers()->get($this->context['uid']);
+      $user = $this->game->getUsers()->get($this->context['uid']);
       
       if (!$user) {
         throw new \RuntimeException("Could not update username. Do you even exist?");
@@ -56,10 +51,10 @@ final class Rename extends Command {
       
       $user->setUsername($new_username);
       
-      $game->getOutputUi()->println($user->getId(), "Your new name is '{$user->getUsername()}'.");
+      $this->game->getOutputUi()->println($user->getId(), "Your new name is '{$user->getUsername()}'.");
     }
     else {
-      $this->logger->error("Missing contexts: uid, game.");
+      $this->logger->error("Missing contexts: uid.");
     }
     
     return $this;

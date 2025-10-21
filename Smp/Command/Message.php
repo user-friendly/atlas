@@ -8,7 +8,6 @@
 
 namespace Smp\Command;
 
-use Smp\Game;
 use Smp\Utility;
 
 /**
@@ -47,17 +46,13 @@ final class Message extends Command {
    * @see \Smp\Command\Command::execute()
    */
   public function execute(): self {
-    if (isset($this->context['to_uids']) && isset($this->context['game'])) {
-      /**
-       * @var Game $game
-       */
-      $game = $this->context['game'];
+    if (isset($this->context['to_uids'])) {
       // TODO Loading the user is not really needed here.
       //      Could create another context: to_single_uid.
-      $to_users = \array_map(fn($to_uid) => $game->getUsers()->get($to_uid), $this->context['to_uids']);
-      $user = isset($this->context['uid']) ? $game->getUsers()->get($this->context['uid']) : NULL;
+      $to_users = \array_map(fn($to_uid) => $this->game->getUsers()->get($to_uid), $this->context['to_uids']);
+      $user = isset($this->context['uid']) ? $this->game->getUsers()->get($this->context['uid']) : NULL;
       
-      $outputUi = $game->getOutputUi();
+      $outputUi = $this->game->getOutputUi();
       
       $prefix = '';
       if ($user) {

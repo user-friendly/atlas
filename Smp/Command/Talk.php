@@ -7,7 +7,6 @@
 
 namespace Smp\Command;
 
-use Smp\Game;
 use Smp\Utility;
 
 /**
@@ -44,14 +43,10 @@ final class Talk extends Command {
    * @see \Smp\Command\Command::execute()
    */
   public function execute(): self {
-    if (isset($this->context['uid']) && isset($this->context['game'])) {
-      /**
-       * @var Game $game
-       */
-      $game = $this->context['game'];
+    if (isset($this->context['uid'])) {
       $uid = $this->context['uid'];
-      $user = $game->getUsers()->get($uid);
-      $outputUi = $game->getOutputUi();
+      $user = $this->game->getUsers()->get($uid);
+      $outputUi = $this->game->getOutputUi();
       
       $name = "$uid@{$user->getUsername()}";
       $text = \trim(\implode(' ', $this->getArguments()));
@@ -63,7 +58,7 @@ final class Talk extends Command {
         return $this;
       }
       
-      foreach ($game->getUsers() as $recipient_id => $user) {
+      foreach ($this->game->getUsers() as $recipient_id => $user) {
         if ($recipient_id == 0) {
           continue;
         }
