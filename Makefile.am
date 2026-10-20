@@ -1,6 +1,6 @@
 
 AM_CFLAGS = -I$(top_srcdir)/include
-AM_CXXFLAGS = -I$(top_srcdir)/include
+AM_CXXFLAGS = $(WARN_CXXFLAGS) -I$(top_srcdir)/include
 # AM_CXXFLAGS = $(BOOST_CPPFLAGS) -I$(top_srcdir)/include
 # AM_LDFLAGS = $(BOOST_LDFLAGS)
 

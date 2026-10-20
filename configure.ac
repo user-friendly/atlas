@@ -3,7 +3,7 @@
 
 AC_PREREQ([2.73])
 AC_INIT([Atlas], [0.1])
-AM_INIT_AUTOMAKE([subdir-objects])
+AM_INIT_AUTOMAKE([-Wall subdir-objects])
 AC_CONFIG_SRCDIR([src/main.cpp])
 AC_CONFIG_HEADERS([config.h])
 
@@ -19,6 +19,7 @@ AC_PROG_CXX
 
 # Checks for languages.
 AC_LANG([C++])
+AC_SUBST([WARN_CXXFLAGS], ["-Wall -Wextra"])
 
 # Checks for libraries.
 
