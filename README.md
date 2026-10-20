@@ -1,6 +1,6 @@
 # ABOUT
 
-Atlas is a simple MUD engine, written in C/C++ (which on is it?).
+Atlas is a simple MUD engine, written in C++.
 
 # Program Execution
 
@@ -14,7 +14,7 @@ TODO How to start the server?
 
 # GAME LOOP NOTES
 
-TODO Address this when converting to C.
+TODO Address this when converting to C++.
 
 Currently in order to achieve (as precise as possible) ticks per second, the main game loops
 busy-waits. It is a major hog on CPU but I couldn't find another way (using PHP). It is acceptable
