@@ -16,9 +16,10 @@ ACLOCAL_AMFLAGS = -I m4-project
 AM_CXXFLAGS = $(WARN_CXXFLAGS)
 AM_LDFLAGS = $(BOOST_LDFLAGS) -Wl,-rpath,./libs/lib -Wl,-rpath,../libs/lib
 
+#TOP_BOOST_LIBS = $(BOOST_FILESYSTEM_LIB) \
+#                    $(BOOST_RANDOM_LIB)
+
 # Logging lib requires Boost's atomic, probably because it's multi-threaded.
-TOP_BOOST_LIBS = $(BOOST_FILESYSTEM_LIB) \
-                    $(BOOST_RANDOM_LIB)
 # TOP_BOOST_LIBS = $(BOOST_SYSTEM_LIB) \
 #             $(BOOST_FILESYSTEM_LIB) \
 #             $(BOOST_DATE_TIME_LIB) \
@@ -32,7 +33,7 @@ atlas_SOURCES = src/main.cpp
 
 # atlas_CFLAGS = $(AM_CFLAGS) $(CFLAGS_PCH)
 # atlas_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_PCH)
-atlas_LDADD = $(TOP_BOOST_LIBS)
+# atlas_LDADD = $(TOP_BOOST_LIBS)
 
 # PCH_FILENAME = std.h.(pch|gch)
 # AM error: configure substitutions are not allowed in _SOURCES variables
