@@ -11,7 +11,7 @@ ACLOCAL_AMFLAGS = -I m4-project
 # BOOST_LDFLAGS = -L/usr/lib
 
 # No C files, also includes are preprocessor flags.
-# AM_CFLAGS = -I$(top_srcdir)/include
+AM_CFLAGS = -I$(top_srcdir)/include
 AM_CPPFLAGS = -I$(top_srcdir)/include $(BOOST_CPPFLAGS)
 AM_CXXFLAGS = $(WARN_CXXFLAGS)
 AM_LDFLAGS = $(BOOST_LDFLAGS) -Wl,-rpath,./libs/lib -Wl,-rpath,../libs/lib
@@ -29,7 +29,8 @@ AM_LDFLAGS = $(BOOST_LDFLAGS) -Wl,-rpath,./libs/lib -Wl,-rpath,../libs/lib
 #             $(BOOST_REGEX_LIB) 
 
 bin_PROGRAMS = atlas
-atlas_SOURCES = src/main.cpp\
+atlas_SOURCES = src/main.cpp \
+                src/network/tcp_connection.cpp \
                 src/network/server.cpp
 
 # atlas_CFLAGS = $(AM_CFLAGS) $(CFLAGS_PCH)
