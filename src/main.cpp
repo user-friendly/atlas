@@ -1,4 +1,10 @@
+/**
+ * Program main entry point.
+ */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <iostream>
 #include <string>
@@ -8,7 +14,6 @@
 
 #include "network/server.hpp"
 
-
 using namespace std;
 using namespace boost;
 using namespace boost::asio::ip;
@@ -17,19 +22,26 @@ constexpr string_view PROG_NAME {"Atlas Mud Engine"};
 constexpr string_view PROG_VERSION {"1.0.0-alpha4"};
 
 int main(int argc, char* argv[]) {
-  cout << "\n" << PROG_NAME << " v" << PROG_VERSION << "\n" << endl;
+  #ifdef DEBUG
+  cout << "DEBUG enabled" << endl;
+  #endif
+  
+  cout << PROG_NAME << " v" << PROG_VERSION << endl;
 
-  // unsigned int const max_threads { thread::hardware_concurrency() };
-  // cout << max_threads << " concurrent threads are supported.\n";
-  // this_thread::sleep_for(std::chrono::milliseconds(500));
-
-  thread t1 ([]{
-    // try {
-      atlas::network::server tcp_server {};
-      tcp_server.run();
-    // } catch (std::exception& e) {
-    //   cerr << "network tpc server error:\n\t\t" << e.what() << endl;
-    // }
+  // Yes, it is crude and we can just export the server itself.
+  // But, this should hopefully signal future me that only the
+  // stop method is meant to be executed from outside the thread.
+  std::function<void()>* tcp_server_stop = nullptr;
+  
+  thread t1 ([&tcp_server_stop]{
+    atlas::network::server tcp_server {};
+    
+    std::function<void()> fn = [&tcp_server](){
+      tcp_server.stop();
+    };
+    tcp_server_stop = &fn;
+    
+    tcp_server.run();
   });
   
   cout << "Run game loop." << endl;
@@ -38,20 +50,19 @@ int main(int argc, char* argv[]) {
   
   bool run = true;
   while (run) {
-    
     cout << "admin> ";
     cin >> input;
     if (input == "quit" || input == "exit" || input == "q" || input == "e") {
       run = false;
     }
-    
   }
-
   cout << "Game loop ended." << endl;
+
+  (*tcp_server_stop)();
 
   t1.join();
 
-  cout << "\nBye!" << endl;
+  cout << "Bye!" << endl;
   
   return 0;
 }

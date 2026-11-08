@@ -1,3 +1,10 @@
+/**
+ * Network server.
+ */
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <iostream>
 #include <memory>
@@ -8,6 +15,7 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/write.hpp>
+#include <boost/asio/error.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
 // Local includes.
@@ -16,20 +24,31 @@
 
 using namespace std;
 
-
 using boost::asio::ip::tcp;
 
 using namespace atlas::network;
 
 server::server() :
-  io_ctx {8},
+  io_ctx {io_ctx_co_hint},
+  tick_timer {io_ctx},
+  acceptor_address {address_v4::any()},
   acceptor {io_ctx},
-  conns {},
-  tick_timer {io_ctx}
-{}
+  conns {}
+{
+  // unsigned int const max_threads { thread::hardware_concurrency() };
+  // cout << max_threads << " concurrent threads are supported.\n";
+  
+}
 
 void server::accept(const char* msg) {
   acceptor.async_accept([this, msg](const boost::system::error_code ec, tcp::socket peer) {
+    if (ec == error::operation_aborted) {
+      #ifdef DEBUG
+      std::cout << "acceptor: operation aborted (closed?)" << endl;
+      #endif
+      return;
+    }
+    
     if (ec) {
       cerr << "accept error: " << ec.message() << endl;
       return;
@@ -50,6 +69,13 @@ void server::accept(const char* msg) {
 void server::tick() {
   tick_timer.expires_after(tick_timer_period);
   tick_timer.async_wait([this](const boost::system::error_code ec){
+    if (ec == error::operation_aborted) {
+      #ifdef DEBUG
+      std::cout << "network tick timer: operation aborted (canceled?)" << endl;
+      #endif
+      return;
+    }
+    
     if (ec) {
       cerr << "network tick timer error: " << ec.message() << endl;
       return;
@@ -87,16 +113,16 @@ void server::tick() {
 }
 
 void server::run() {
-  cout << "Starting network server on port 9000." << endl;
-  
   const char msg[] {"\nHello!\nWelcome to the Multi-User Dungeon.\n\n"};
+  tcp::endpoint endpoint_v4 {acceptor_address, port_default};
+  acceptor.open(endpoint_v4.protocol());
 
-  tcp::endpoint endpoint {tcp::v4(), 9000};
+  cout << "Starting network server, bind to: ";
+  cout << endpoint_v4 << endl;
 
-  acceptor.open(endpoint.protocol());
   
   boost::system::error_code ec_bind {};
-  acceptor.bind(endpoint);
+  acceptor.bind(endpoint_v4);
   if (ec_bind) {
     cerr << "bind error: " << ec_bind.message() << endl;
     return;
@@ -113,5 +139,14 @@ void server::run() {
 }
 
 void server::stop() {
-  io_ctx.stop();
+  post(io_ctx, [this]{
+    acceptor.close();
+    tick_timer.cancel();
+    for (const auto& con : conns) {
+      if (con->is_open()) {
+        con->close();
+      }
+    }
+    });
+  //io_ctx.stop();
 }

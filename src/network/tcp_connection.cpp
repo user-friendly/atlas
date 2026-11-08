@@ -1,3 +1,10 @@
+/**
+ * Connection: TCP.
+ */
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <string>
 #include <iostream>
@@ -30,8 +37,19 @@ void tcp_connection::read_async() {
   std::shared_ptr<tcp_connection> self {shared_from_this()};
   sock.async_read_some(buffer(input_buff), [this, self](system::error_code ec, std::size_t n) {
     if (ec == error::eof) {
+      #ifdef DEBUG
+      std::cout << "socket read: end of file" << endl;
+      #endif
       return;
     }
+
+    if (ec == error::operation_aborted) {
+      #ifdef DEBUG
+      std::cout << "socket read: operation aborted (scok closed?)" << endl;
+      #endif
+      return;
+    }
+    
     
     if (ec) {
       std::cerr << "socket read error: " << ec.message() << std::endl;
