@@ -49,9 +49,9 @@ int main(int argc, char* argv[]) {
   string input {};
   
   bool run = true;
-  while (run) {
-    cout << "admin> ";
-    cin >> input;
+  while (run && !cin.eof()) {
+    cout << "admin console> ";
+    getline(cin, input);
     if (input == "quit" || input == "exit" || input == "q" || input == "e") {
       run = false;
     }

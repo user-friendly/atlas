@@ -2,8 +2,10 @@
 #ifndef ATLAS_NETWORK_SERVER_HPP
 #define ATLAS_NETWORK_SERVER_HPP
 
+#include <cstdint>
 #include <memory>
-#include <unordered_set>
+#include <map>
+#include <queue>
 #include <chrono>
 
 #include <boost/asio/io_context.hpp>
@@ -17,6 +19,7 @@ using namespace boost::asio;
 using namespace boost::asio::ip;
 
 namespace atlas::network {
+  using connection_id = std::uint32_t;
   
   class server {
   protected:
@@ -27,12 +30,15 @@ namespace atlas::network {
     
     io_context io_ctx;
     steady_timer tick_timer;
-
+    bool tick_timer_run;
+ 
     address acceptor_address;
     tcp::acceptor acceptor;
-    
-    std::unordered_set<tcp_connection_ptr> conns;
-    std::unordered_set<tcp_connection_ptr> conns_closed;
+
+    connection_id conn_serial_id;
+    std::map<connection_id, tcp_connection_ptr> conns;
+    std::size_t conns_close_batch = 4;
+    std::queue<connection_id> conns_closed;
     
     void accept(const char* msg);
     void tick();

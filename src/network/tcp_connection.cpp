@@ -26,7 +26,10 @@ using namespace atlas::network;
 
 tcp_connection::tcp_connection(ip::tcp::socket peer) :
   sock {std::move(peer)},
-  input {}
+  input_buff {},
+  output_buff {},
+  input {},
+  output {}
 {}
 
 void tcp_connection::init() {
@@ -35,38 +38,32 @@ void tcp_connection::init() {
 
 void tcp_connection::read_async() {
   std::shared_ptr<tcp_connection> self {shared_from_this()};
-  sock.async_read_some(buffer(input_buff), [this, self](system::error_code ec, std::size_t n) {
-    if (ec == error::eof) {
-      #ifdef DEBUG
-      std::cout << "socket read: end of file" << endl;
-      #endif
-      return;
-    }
-
-    if (ec == error::operation_aborted) {
-      #ifdef DEBUG
-      std::cout << "socket read: operation aborted (scok closed?)" << endl;
-      #endif
-      return;
-    }
-    
-    
+  sock.async_read_some(buffer(input_buff), [this, self](system::error_code ec, std::size_t n) {    
     if (ec) {
-      std::cerr << "socket read error: " << ec.message() << std::endl;
-      close();
+      if (ec == error::eof) {
+#ifdef DEBUG
+        std::cout << "socket read: end of file" << endl;
+#endif
+        close();
+      } else if (ec == error::operation_aborted) {
+#ifdef DEBUG
+        std::cout << "socket read: operation aborted (scok closed?)" << endl;
+#endif
+      } else {
+        std::cerr << "socket read error: " << ec.message() << std::endl;
+        close();
+      }
       return;
     }
 
     if (n > 0) {
-
-      #ifdef DEBUG
+#ifdef DEBUG
       std::cout << "socket recv: "; // std::string_view(input.data(), n)
       std::cout.write(input_buff.data(), n);
       std::cout << std::endl;
-      #endif
-
-      input.push(string(input_buff.data(), 0, n));      
+#endif
       
+      input.push(string(input_buff.data(), 0, n));      
     } else {
       std::cerr << "socket read error: nothing to read!" << std::endl;
     }
@@ -119,7 +116,20 @@ void tcp_connection::write_flush() {
 }
 
 void tcp_connection::close() {
-  sock.close();
+  system::error_code ec; // ignored
+  
+  sock.cancel(ec);
+#ifdef DEBUG
+  if (ec) std::cerr << "socket cancel error: " << ec.message() << std::endl;
+#endif
+  sock.shutdown(ip::tcp::socket::shutdown_both, ec);
+#ifdef DEBUG
+  if (ec) std::cerr << "socket shutdown error: " << ec.message() << std::endl;
+#endif  
+  sock.close(ec);
+#ifdef DEBUG
+  if (ec) std::cerr << "socket close error: " << ec.message() << std::endl;
+#endif
 }
 
 bool tcp_connection::is_open() {
@@ -127,5 +137,6 @@ bool tcp_connection::is_open() {
 }
 
 string tcp_connection::remote_address() {
+  // TODO Possible exception throw.
   return sock.remote_endpoint().address().to_string();
 }

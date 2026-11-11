@@ -19,7 +19,7 @@ namespace atlas::network {
     : public std::enable_shared_from_this<tcp_connection> {
   protected:
     static constexpr size_t buffer_size = 1024;
-    
+
     ip::tcp::socket sock;
     
     // Consider double-buffering.

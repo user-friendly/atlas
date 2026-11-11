@@ -31,13 +31,15 @@ using namespace atlas::network;
 server::server() :
   io_ctx {io_ctx_co_hint},
   tick_timer {io_ctx},
+  tick_timer_run {true},
   acceptor_address {address_v4::any()},
   acceptor {io_ctx},
-  conns {}
+  conn_serial_id {0},
+  conns {},
+  conns_closed {}
 {
   // unsigned int const max_threads { thread::hardware_concurrency() };
   // cout << max_threads << " concurrent threads are supported.\n";
-  
 }
 
 void server::accept(const char* msg) {
@@ -55,9 +57,13 @@ void server::accept(const char* msg) {
     }
     tcp_connection_ptr new_peer {make_shared<tcp_connection>(std::move(peer))};
 
-    cout << "client connected: " << new_peer->remote_address() << endl;
+    connection_id new_peer_id = conn_serial_id++;
+    conns[new_peer_id] = new_peer;
+
+    cout << "client connected [" << new_peer_id << "]: "
+         << new_peer->remote_address()
+         << endl;
     
-    conns.insert(new_peer);
     new_peer->init();
     new_peer->write(string(msg));
     new_peer->write("MUD is under construction, so we'll have to boot you out!\n\n"s);
@@ -69,23 +75,24 @@ void server::accept(const char* msg) {
 void server::tick() {
   tick_timer.expires_after(tick_timer_period);
   tick_timer.async_wait([this](const boost::system::error_code ec){
-    if (ec == error::operation_aborted) {
-      #ifdef DEBUG
-      std::cout << "network tick timer: operation aborted (canceled?)" << endl;
-      #endif
-      return;
-    }
-    
     if (ec) {
-      cerr << "network tick timer error: " << ec.message() << endl;
+      if (ec == error::operation_aborted) {
+#ifdef DEBUG
+        std::cout << "network tick timer: operation aborted (canceled?)" << endl;
+#endif
+      } else {
+        cerr << "network tick timer error: " << ec.message() << endl;
+      }
       return;
     }
     
     if (!conns.empty()) {
-      for (const auto& con : conns) {
+      for (const auto& pair : conns) {
+        const connection_id& con_id = pair.first;
+        const tcp_connection_ptr& con = pair.second;
         if (!con->is_open()) {
-          cout << "client disconnected: " << con->remote_address() << endl;
-          conns_closed.insert(con);
+          cout << "disconnect client [" << con_id << "]: connection closed" << endl;
+          conns_closed.push(pair.first);
           continue;
         }
         
@@ -93,8 +100,9 @@ void server::tick() {
         boost::trim_right(line);
         
         if (line == "quit" || line == "exit") {
+          cout << "disconnect client [" << con_id << "]: user quit" << endl;
           con->close();
-          conns_closed.insert(con);
+          conns_closed.push(pair.first);
           continue;
         } else if (!line.empty()) {
           line += "\n";
@@ -104,11 +112,14 @@ void server::tick() {
         con->write_flush();
       }
       
-      for (const auto& con_rem : conns_closed) {
-        conns.erase(con_rem);
+      for (std::size_t i = 0; i < conns_close_batch && !conns_closed.empty(); i++) {
+        conns.erase(conns_closed.front());
+        conns_closed.pop();
       }
     }
-    tick();
+    if (tick_timer_run) {
+      tick();
+    }
     });
 }
 
@@ -119,7 +130,6 @@ void server::run() {
 
   cout << "Starting network server, bind to: ";
   cout << endpoint_v4 << endl;
-
   
   boost::system::error_code ec_bind {};
   acceptor.bind(endpoint_v4);
@@ -140,13 +150,15 @@ void server::run() {
 
 void server::stop() {
   post(io_ctx, [this]{
+    tick_timer_run = false;
+
     acceptor.close();
-    tick_timer.cancel();
-    for (const auto& con : conns) {
-      if (con->is_open()) {
-        con->close();
-      }
+    
+    for (const auto& pair : conns) {
+      const connection_id& con_id = pair.first;
+      const tcp_connection_ptr& con = pair.second;
+      cout << "disconnect client [" << con_id << "]" << endl;
+      con->close();
     }
     });
-  //io_ctx.stop();
 }
