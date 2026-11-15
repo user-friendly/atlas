@@ -13,6 +13,7 @@
 #include <chrono>
 
 #include "network/server.hpp"
+#include "game/engine.hpp"
 
 using namespace std;
 using namespace boost;
@@ -47,14 +48,13 @@ int main(int argc, char* argv[]) {
   cout << "Run game loop." << endl;
   
   string input {};
+
+  atlas::game::engine engine {};
   
-  bool run = true;
-  while (run && !cin.eof()) {
+  while (engine.is_running()) {
     cout << "admin console> ";
     getline(cin, input);
-    if (input == "quit" || input == "exit" || input == "q" || input == "e") {
-      run = false;
-    }
+    engine.process_input(atlas::game::engine::admin_id, input);
   }
   cout << "Game loop ended." << endl;
 

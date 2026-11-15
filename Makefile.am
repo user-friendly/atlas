@@ -31,7 +31,8 @@ AM_LDFLAGS = $(BOOST_LDFLAGS) -Wl,-rpath,./libs/lib -Wl,-rpath,../libs/lib
 bin_PROGRAMS = atlas
 atlas_SOURCES = src/main.cpp \
                 src/network/tcp_connection.cpp \
-                src/network/server.cpp
+                src/network/server.cpp \
+                src/game/engine.cpp
 
 # atlas_CFLAGS = $(AM_CFLAGS) $(CFLAGS_PCH)
 # atlas_CXXFLAGS = $(AM_CXXFLAGS) $(CXXFLAGS_PCH)
