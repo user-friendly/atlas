@@ -16,7 +16,7 @@ bool engine::is_running() {
 
 void engine::process_input(player_id pid, std::string& input) {
   if (pid == admin_id) {
-    if (input == "quit" || input == "exit" || input == "q" || input == "e") {
+    if (input == "q" || input.length() <= 0 || input == "e" || input == "quit" || input == "exit") {
       run = false;
     } else {
       std::cerr << "admin command not found" << std::endl;

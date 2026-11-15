@@ -125,8 +125,18 @@ void server::tick() {
 
 void server::run() {
   const char msg[] {"\nHello!\nWelcome to the Multi-User Dungeon.\n\n"};
+  
   tcp::endpoint endpoint_v4 {acceptor_address, port_default};
   acceptor.open(endpoint_v4.protocol());
+
+  socket_base::reuse_address option(true);
+  boost::system::error_code ec_option {};
+  acceptor.set_option(option, ec_option);
+
+  if (ec_option) {
+    cerr << "failed to set socket option: "<< ec_option.message() << endl;
+    return;
+  }
 
   cout << "Starting network server, bind to: ";
   cout << endpoint_v4 << endl;

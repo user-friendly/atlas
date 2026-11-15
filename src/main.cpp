@@ -43,6 +43,8 @@ int main(int argc, char* argv[]) {
     tcp_server_stop = &fn;
     
     tcp_server.run();
+
+    // TODO Send message to the game engine - server stopped!
   });
   
   cout << "Run game loop." << endl;
