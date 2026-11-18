@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
   #endif
   
   cout << PROG_NAME << " v" << PROG_VERSION << endl;
-
+  
   // Yes, it is crude and we can just export the server itself.
   // But, this should hopefully signal future me that only the
   // stop method is meant to be executed from outside the thread.
